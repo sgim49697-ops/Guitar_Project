@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Guitar Tuner</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', sans-serif;
+    background: #1a1a2e;
+    color: #eee;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+  }
+  .container {
+    text-align: center;
+    width: 400px;
+    max-width: 95vw;
+  }
+  h1 {
+    font-size: 1.5rem;
+    margin-bottom: 1.5rem;
+    color: #8888cc;
+  }
+
+  /* 시작 버튼 */
+  #startBtn {
+    padding: 14px 40px;
+    font-size: 1.1rem;
+    background: #4a4a8a;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-bottom: 1.5rem;
+  }
+  #startBtn:hover { background: #5a5a9a; }
+  #startBtn.active { background: #cc4444; }
+
+  /* 줄 선택 */
+  .strings {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 2rem;
+  }
+  .strings button {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    border: 2px solid #555;
+    background: #2a2a4a;
+    color: #ccc;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .strings button.active {
+    border-color: #6a6aff;
+    background: #3a3a6a;
+    color: #fff;
+  }
+  .strings button .note { font-weight: bold; font-size: 1rem; }
+  .strings button .num { font-size: 0.7rem; opacity: 0.6; }
+
+  /* 감지된 음 */
+  .detected {
+    margin-bottom: 1.5rem;
+  }
+  .detected .note {
+    font-size: 4rem;
+    font-weight: bold;
+    line-height: 1;
+  }
+  .detected .freq {
+    font-size: 1rem;
+    color: #888;
+    margin-top: 4px;
+  }
+
+  /* 튜닝 미터 */
+  .meter {
+    position: relative;
+    height: 40px;
+    background: #2a2a4a;
+    border-radius: 20px;
+    margin-bottom: 1rem;
+    overflow: hidden;
+  }
+  .meter .center-line {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #666;
+    transform: translateX(-50%);
+  }
+  .meter .indicator {
+    position: absolute;
+    top: 50%;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #cc4444;
+    transform: translate(-50%, -50%);
+    transition: left 0.1s, background 0.2s;
+    left: 50%;
+  }
+  .meter .indicator.in-tune { background: #44cc66; }
+
+  /* 센트 표시 */
+  .cents {
+    font-size: 1.2rem;
+    margin-bottom: 0.5rem;
+  }
+  .cents.sharp { color: #cc6644; }
+  .cents.flat { color: #4488cc; }
+  .cents.in-tune { color: #44cc66; }
+
+  /* 가이드 메시지 */
+  .guide {
+    font-size: 1.1rem;
+    min-height: 1.5em;
+    color: #aaa;
+  }
+
+  .idle-msg {
+    color: #666;
+    margin-top: 1rem;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Guitar Tuner</h1>
+
+  <button id="startBtn" onclick="toggleTuner()">마이크 시작</button>
+
+  <div class="strings" id="strings"></div>
+
+  <div class="detected">
+    <div class="note" id="noteName">-</div>
+    <div class="freq" id="freqDisplay">-- Hz</div>
+  </div>
+
+  <div class="meter">
+    <div class="center-line"></div>
+    <div class="indicator" id="indicator"></div>
+  </div>
+
+  <div class="cents" id="centsDisplay">0 cents</div>
+  <div class="guide" id="guide">마이크를 시작하고 기타를 연주하세요</div>
+</div>
+
+<script>
+// 기타 표준 튜닝 (6번→1번 줄)
+const GUITAR_STRINGS = [
+  { num: 6, note: 'E2', freq: 82.41 },
+  { num: 5, note: 'A2', freq: 110.00 },
+  { num: 4, note: 'D3', freq: 146.83 },
+  { num: 3, note: 'G3', freq: 196.00 },
+  { num: 2, note: 'B3', freq: 246.94 },
+  { num: 1, note: 'E4', freq: 329.63 },
+];
+
+// 크로매틱 스케일 (전체 음이름 매핑용)
+const NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+
+let audioCtx = null;
+let analyser = null;
+let stream = null;
+let isRunning = false;
+let selectedString = null;
+let animFrameId = null;
+
+// 줄 선택 버튼 생성
+const stringsEl = document.getElementById('strings');
+GUITAR_STRINGS.forEach((s, i) => {
+  const btn = document.createElement('button');
+  btn.innerHTML = `<div class="note">${s.note.replace(/\d/, '')}</div><div class="num">${s.num}번</div>`;
+  btn.onclick = () => selectString(i);
+  stringsEl.appendChild(btn);
+});
+
+function selectString(idx) {
+  selectedString = idx;
+  document.querySelectorAll('.strings button').forEach((btn, i) => {
+    btn.classList.toggle('active', i === idx);
+  });
+}
+
+// 기본: 자동 감지 (선택 없음)
+selectString(null);
+
+async function toggleTuner() {
+  const btn = document.getElementById('startBtn');
+  if (isRunning) {
+    stopTuner();
+    btn.textContent = '마이크 시작';
+    btn.classList.remove('active');
+    return;
+  }
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    audioCtx = new AudioContext();
+    const source = audioCtx.createMediaStreamSource(stream);
+    analyser = audioCtx.createAnalyser();
+    analyser.fftSize = 4096;
+    source.connect(analyser);
+
+    isRunning = true;
+    btn.textContent = '정지';
+    btn.classList.add('active');
+    detect();
+  } catch (e) {
+    document.getElementById('guide').textContent = '마이크 접근이 거부되었습니다';
+  }
+}
+
+function stopTuner() {
+  isRunning = false;
+  if (animFrameId) cancelAnimationFrame(animFrameId);
+  if (stream) stream.getTracks().forEach(t => t.stop());
+  if (audioCtx) audioCtx.close();
+  audioCtx = null;
+  document.getElementById('noteName').textContent = '-';
+  document.getElementById('freqDisplay').textContent = '-- Hz';
+  document.getElementById('centsDisplay').textContent = '0 cents';
+  document.getElementById('centsDisplay').className = 'cents';
+  document.getElementById('indicator').style.left = '50%';
+  document.getElementById('indicator').classList.remove('in-tune');
+  document.getElementById('guide').textContent = '마이크를 시작하고 기타를 연주하세요';
+}
+
+// Autocorrelation 피치 감지
+function autoCorrelate(buf, sampleRate) {
+  // 신호 크기 확인 (너무 작으면 무시)
+  let rms = 0;
+  for (let i = 0; i < buf.length; i++) rms += buf[i] * buf[i];
+  rms = Math.sqrt(rms / buf.length);
+  if (rms < 0.01) return -1;
+
+  // 앞뒤 무음 구간 자르기
+  let r1 = 0, r2 = buf.length - 1;
+  const threshold = 0.2;
+  for (let i = 0; i < buf.length / 2; i++) {
+    if (Math.abs(buf[i]) < threshold) { r1 = i; } else break;
+  }
+  for (let i = buf.length - 1; i >= buf.length / 2; i--) {
+    if (Math.abs(buf[i]) < threshold) { r2 = i; } else break;
+  }
+
+  const trimmed = buf.slice(r1, r2);
+  const len = trimmed.length;
+
+  // Autocorrelation
+  const c = new Float32Array(len);
+  for (let i = 0; i < len; i++) {
+    for (let j = 0; j < len - i; j++) {
+      c[i] += trimmed[j] * trimmed[j + i];
+    }
+  }
+
+  // 첫 번째 dip 이후 최대값 찾기
+  let d = 0;
+  while (c[d] > c[d + 1]) d++;
+
+  let maxVal = -1, maxPos = -1;
+  for (let i = d; i < len; i++) {
+    if (c[i] > maxVal) { maxVal = c[i]; maxPos = i; }
+  }
+
+  // 포물선 보간으로 정밀도 향상
+  const t0 = maxPos > 0 ? c[maxPos - 1] : c[maxPos];
+  const t1 = c[maxPos];
+  const t2 = maxPos < len - 1 ? c[maxPos + 1] : c[maxPos];
+  const a = (t0 + t2 - 2 * t1) / 2;
+  const b = (t2 - t0) / 2;
+  const betterPos = a ? maxPos - b / (2 * a) : maxPos;
+
+  return sampleRate / betterPos;
+}
+
+// 주파수 → 가장 가까운 음이름 + 옥타브
+function freqToNote(freq) {
+  const semitone = 12 * Math.log2(freq / 440);
+  const midi = Math.round(semitone) + 69;
+  const name = NOTE_NAMES[midi % 12];
+  const octave = Math.floor(midi / 12) - 1;
+  const exactFreq = 440 * Math.pow(2, (midi - 69) / 12);
+  const cents = 1200 * Math.log2(freq / exactFreq);
+  return { name, octave, midi, exactFreq, cents };
+}
+
+// 가장 가까운 기타 줄 찾기
+function findClosestString(freq) {
+  let minDist = Infinity, closest = 0;
+  GUITAR_STRINGS.forEach((s, i) => {
+    const dist = Math.abs(1200 * Math.log2(freq / s.freq));
+    if (dist < minDist) { minDist = dist; closest = i; }
+  });
+  return closest;
+}
+
+function detect() {
+  if (!isRunning) return;
+  animFrameId = requestAnimationFrame(detect);
+
+  const buf = new Float32Array(analyser.fftSize);
+  analyser.getFloatTimeDomainData(buf);
+
+  const freq = autoCorrelate(buf, audioCtx.sampleRate);
+  if (freq === -1) return; // 소리 없음
+
+  const noteInfo = freqToNote(freq);
+  const cents = noteInfo.cents;
+
+  // 타겟 줄 결정
+  let targetIdx = selectedString;
+  if (targetIdx === null) {
+    targetIdx = findClosestString(freq);
+  }
+  const target = GUITAR_STRINGS[targetIdx];
+  const centsFromTarget = 1200 * Math.log2(freq / target.freq);
+
+  // UI 업데이트
+  const noteEl = document.getElementById('noteName');
+  const freqEl = document.getElementById('freqDisplay');
+  const centsEl = document.getElementById('centsDisplay');
+  const indicator = document.getElementById('indicator');
+  const guideEl = document.getElementById('guide');
+
+  noteEl.textContent = noteInfo.name + noteInfo.octave;
+  freqEl.textContent = freq.toFixed(1) + ' Hz';
+
+  // 센트 표시 (타겟 기준)
+  const absCents = Math.abs(centsFromTarget);
+  const roundCents = Math.round(centsFromTarget);
+
+  if (absCents <= 5) {
+    centsEl.textContent = '정확!';
+    centsEl.className = 'cents in-tune';
+    indicator.classList.add('in-tune');
+    guideEl.textContent = `${target.note} 정확합니다!`;
+    noteEl.style.color = '#44cc66';
+  } else {
+    indicator.classList.remove('in-tune');
+    noteEl.style.color = '#eee';
+    if (centsFromTarget > 0) {
+      centsEl.textContent = `+${roundCents} cents (높음)`;
+      centsEl.className = 'cents sharp';
+      guideEl.textContent = `줄을 풀어주세요 ← ${target.note} 목표`;
+    } else {
+      centsEl.textContent = `${roundCents} cents (낮음)`;
+      centsEl.className = 'cents flat';
+      guideEl.textContent = `줄을 조여주세요 → ${target.note} 목표`;
+    }
+  }
+
+  // 미터 인디케이터 위치 (±50센트 범위)
+  const clampedCents = Math.max(-50, Math.min(50, centsFromTarget));
+  const pct = 50 + (clampedCents / 50) * 45;
+  indicator.style.left = pct + '%';
+}
+</script>
+</body>
+</html>
