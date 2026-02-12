@@ -1,0 +1,80 @@
+version: '3.8'
+
+services:
+  # Node.js 서버 (튜너 + Unity WebGL 서빙)
+  node-server:
+    build:
+      context: ./Tunerapp
+      dockerfile: Dockerfile
+    container_name: guitar-tuner-server
+    ports:
+      - "8000:8000"
+    volumes:
+      # Unity WebGL 빌드 마운트 (빌드 후 활성화)
+      - ./UnityApp/Builds/WebGL:/app/practice:ro
+      # 개발 모드: 코드 변경 감지
+      - ./Tunerapp:/app
+      - /app/node_modules
+    restart: unless-stopped
+    networks:
+      - guitar-network
+
+  # FastAPI AI 서버
+  ai-api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    container_name: guitar-ai-api
+    ports:
+      - "8080:8080"
+    environment:
+      # OpenAI API 키 (필요시 .env 파일에서 불러오기)
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+    volumes:
+      # 개발 모드: 코드 변경 감지 (hot reload)
+      - ./api:/app
+    restart: unless-stopped
+    networks:
+      - guitar-network
+    depends_on:
+      - db
+
+  # MongoDB (사용자 데이터, 연습 기록 저장)
+  db:
+    image: mongo:7
+    container_name: guitar-mongodb
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: guitarsecret
+    volumes:
+      - mongo_data:/data/db
+    restart: unless-stopped
+    networks:
+      - guitar-network
+
+  # MongoDB Express (DB 관리 GUI, 선택사항)
+  mongo-express:
+    image: mongo-express:latest
+    container_name: guitar-mongo-express
+    ports:
+      - "8081:8081"
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: admin
+      ME_CONFIG_MONGODB_ADMINPASSWORD: guitarsecret
+      ME_CONFIG_MONGODB_URL: mongodb://admin:guitarsecret@db:27017/
+    restart: unless-stopped
+    networks:
+      - guitar-network
+    depends_on:
+      - db
+
+volumes:
+  mongo_data:
+    driver: local
+
+networks:
+  guitar-network:
+    driver: bridge
