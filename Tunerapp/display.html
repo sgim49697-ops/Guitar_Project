@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>기타 튜너 - 디스플레이 (컴퓨터)</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', sans-serif;
+    background: #1a1a2e;
+    color: #eee;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+  }
+  .container {
+    text-align: center;
+    width: 500px;
+    max-width: 95vw;
+  }
+  h1 {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    color: #8888cc;
+  }
+  .subtitle {
+    font-size: 1rem;
+    color: #666;
+    margin-bottom: 2rem;
+  }
+
+  .status {
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 2rem;
+    font-size: 1rem;
+  }
+  .status.connected {
+    background: #2a4a2a;
+    color: #44cc66;
+  }
+  .status.disconnected {
+    background: #4a2a2a;
+    color: #cc4444;
+  }
+  .status.waiting {
+    background: #4a4a2a;
+    color: #cccc44;
+  }
+
+  /* 줄 선택 표시 */
+  .strings {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 2.5rem;
+  }
+  .strings .string {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    border: 3px solid #555;
+    background: #2a2a4a;
+    color: #ccc;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s;
+  }
+  .strings .string.active {
+    border-color: #6a6aff;
+    background: #3a3a6a;
+    color: #fff;
+    transform: scale(1.15);
+  }
+  .strings .string .note { font-weight: bold; font-size: 1.2rem; }
+  .strings .string .num { font-size: 0.75rem; opacity: 0.6; }
+
+  /* 감지된 음 */
+  .detected {
+    margin-bottom: 2rem;
+  }
+  .detected .note {
+    font-size: 6rem;
+    font-weight: bold;
+    line-height: 1;
+    transition: color 0.3s;
+  }
+  .detected .freq {
+    font-size: 1.3rem;
+    color: #888;
+    margin-top: 8px;
+  }
+
+  /* 튜닝 미터 */
+  .meter {
+    position: relative;
+    height: 50px;
+    background: #2a2a4a;
+    border-radius: 25px;
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+  }
+  .meter .center-line {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: #666;
+    transform: translateX(-50%);
+  }
+  .meter .indicator {
+    position: absolute;
+    top: 50%;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #cc4444;
+    transform: translate(-50%, -50%);
+    transition: left 0.15s, background 0.3s;
+    left: 50%;
+    box-shadow: 0 0 10px rgba(0,0,0,0.5);
+  }
+  .meter .indicator.in-tune {
+    background: #44cc66;
+    box-shadow: 0 0 20px #44cc66;
+  }
+
+  /* 센트 표시 */
+  .cents {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+    font-weight: bold;
+  }
+  .cents.sharp { color: #cc6644; }
+  .cents.flat { color: #4488cc; }
+  .cents.in-tune { color: #44cc66; }
+
+  /* 가이드 메시지 */
+  .guide {
+    font-size: 1.3rem;
+    min-height: 2em;
+    color: #aaa;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>🎸 기타 튜너 디스플레이</h1>
+  <div class="subtitle">컴퓨터 모니터용</div>
+
+  <div class="status disconnected" id="status">서버 연결 대기 중...</div>
+
+  <div class="strings" id="strings"></div>
+
+  <div class="detected">
+    <div class="note" id="noteName">-</div>
+    <div class="freq" id="freqDisplay">-- Hz</div>
+  </div>
+
+  <div class="meter">
+    <div class="center-line"></div>
+    <div class="indicator" id="indicator"></div>
+  </div>
+
+  <div class="cents" id="centsDisplay">0 cents</div>
+  <div class="guide" id="guide">iPhone에서 마이크를 시작하세요</div>
+</div>
+
+<script>
+// 기타 표준 튜닝
+const GUITAR_STRINGS = [
+  { num: 6, note: 'E2', freq: 82.41 },
+  { num: 5, note: 'A2', freq: 110.00 },
+  { num: 4, note: 'D3', freq: 146.83 },
+  { num: 3, note: 'G3', freq: 196.00 },
+  { num: 2, note: 'B3', freq: 246.94 },
+  { num: 1, note: 'E4', freq: 329.63 },
+];
+
+// 줄 선택 버튼 생성
+const stringsEl = document.getElementById('strings');
+GUITAR_STRINGS.forEach((s) => {
+  const div = document.createElement('div');
+  div.className = 'string';
+  div.innerHTML = `<div class="note">${s.note.replace(/\d/, '')}</div><div class="num">${s.num}번</div>`;
+  stringsEl.appendChild(div);
+});
+
+// WebSocket 연결
+let ws = null;
+let wsReconnectTimer = null;
+
+function connectWebSocket() {
+  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  const host = window.location.host;
+  ws = new WebSocket(`${protocol}//${host}`);
+
+  ws.onopen = () => {
+    console.log('WebSocket 연결됨');
+    document.getElementById('status').textContent = '✓ 서버 연결됨 - iPhone 입력 대기 중...';
+    document.getElementById('status').className = 'status waiting';
+
+    // 디스플레이 클라이언트로 등록
+    ws.send(JSON.stringify({ type: 'register', role: 'display' }));
+  };
+
+  ws.onmessage = (event) => {
+    try {
+      const data = JSON.parse(event.data);
+
+      if (data.type === 'tuning') {
+        updateDisplay(data);
+      }
+    } catch (e) {
+      console.error('메시지 파싱 오류:', e);
+    }
+  };
+
+  ws.onclose = () => {
+    console.log('WebSocket 연결 종료');
+    document.getElementById('status').textContent = '✗ 서버 연결 끊김 - 재연결 시도 중...';
+    document.getElementById('status').className = 'status disconnected';
+
+    // 3초 후 재연결 시도
+    wsReconnectTimer = setTimeout(connectWebSocket, 3000);
+  };
+
+  ws.onerror = (error) => {
+    console.error('WebSocket 오류:', error);
+  };
+}
+
+connectWebSocket();
+
+function updateDisplay(data) {
+  // 서버 상태 업데이트
+  document.getElementById('status').textContent = '✓ iPhone 연결됨 - 데이터 수신 중';
+  document.getElementById('status').className = 'status connected';
+
+  // 감지된 음 표시
+  const noteEl = document.getElementById('noteName');
+  const freqEl = document.getElementById('freqDisplay');
+  const centsEl = document.getElementById('centsDisplay');
+  const indicator = document.getElementById('indicator');
+  const guideEl = document.getElementById('guide');
+
+  noteEl.textContent = data.note;
+  freqEl.textContent = data.freq.toFixed(1) + ' Hz';
+
+  // 타겟 줄 하이라이트
+  document.querySelectorAll('.strings .string').forEach((el, i) => {
+    el.classList.toggle('active', i === data.targetIdx);
+  });
+
+  const absCents = Math.abs(data.cents);
+  const roundCents = Math.round(data.cents);
+
+  if (absCents <= 5) {
+    centsEl.textContent = '정확!';
+    centsEl.className = 'cents in-tune';
+    indicator.classList.add('in-tune');
+    guideEl.textContent = `${data.targetNote} 정확합니다!`;
+    noteEl.style.color = '#44cc66';
+  } else {
+    indicator.classList.remove('in-tune');
+    noteEl.style.color = '#eee';
+    if (data.cents > 0) {
+      centsEl.textContent = `+${roundCents} cents (높음)`;
+      centsEl.className = 'cents sharp';
+      guideEl.textContent = `줄을 풀어주세요 ← ${data.targetNote} 목표`;
+    } else {
+      centsEl.textContent = `${roundCents} cents (낮음)`;
+      centsEl.className = 'cents flat';
+      guideEl.textContent = `줄을 조여주세요 → ${data.targetNote} 목표`;
+    }
+  }
+
+  // 미터 인디케이터 위치
+  const clampedCents = Math.max(-50, Math.min(50, data.cents));
+  const pct = 50 + (clampedCents / 50) * 45;
+  indicator.style.left = pct + '%';
+}
+</script>
+</body>
+</html>

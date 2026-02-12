@@ -1,0 +1,32 @@
+# 환경 변수
+.env
+
+# Node.js
+node_modules/
+npm-debug.log
+package-lock.json
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+
+# Unity
+UnityApp/[Ll]ibrary/
+UnityApp/[Tt]emp/
+UnityApp/[Oo]bj/
+UnityApp/[Bb]uild/
+UnityApp/[Bb]uilds/
+UnityApp/Assets/AssetStoreTools*
+*.pidb.meta
+*.pdb.meta
+*.mdb.meta
+
+# Docker
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
