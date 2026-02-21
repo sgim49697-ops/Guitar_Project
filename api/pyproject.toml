@@ -2,11 +2,7 @@
 name = "guitar-practice-ai-api"
 version = "1.0.0"
 description = "AI-powered guitar practice API with FastAPI"
-readme = "README.md"
 requires-python = ">=3.11"
-authors = [
-    { name = "Guitar Project Team" }
-]
 
 dependencies = [
     "fastapi>=0.109.0",
@@ -27,23 +23,8 @@ db = [
     "motor>=3.3.2",
 ]
 
+[dependency-groups]
 dev = [
-    "pytest>=7.4.0",
-    "httpx>=0.25.0",
-    "black>=23.12.0",
-    "ruff>=0.1.9",
-]
-
-all = [
-    "guitar-practice-ai-api[ai,db,dev]",
-]
-
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
-
-[tool.uv]
-dev-dependencies = [
     "pytest>=7.4.0",
     "httpx>=0.25.0",
     "black>=23.12.0",
@@ -58,7 +39,3 @@ target-version = ['py311']
 line-length = 100
 select = ["E", "F", "I"]
 ignore = []
-
-[tool.pytest.ini_options]
-testpaths = ["tests"]
-python_files = "test_*.py"

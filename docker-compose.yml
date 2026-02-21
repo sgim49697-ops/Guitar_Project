@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # Node.js 서버 (튜너 + Unity WebGL 서빙)
   node-server:
@@ -10,8 +8,8 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      # Unity WebGL 빌드 마운트 (빌드 후 활성화)
-      - ./UnityApp/Builds/WebGL:/app/practice:ro
+      # Unity WebGL 빌드 마운트 (Windows 경로)
+      - /mnt/c/Projects/Project_Guitar/GuitarPracticeUnity/Builds/WebGL:/app/practice:ro
       # 개발 모드: 코드 변경 감지
       - ./Tunerapp:/app
       - /app/node_modules

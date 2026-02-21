@@ -132,6 +132,19 @@
     color: #666;
     margin-top: 1rem;
   }
+
+  /* 디버그 패널 */
+  .debug-panel {
+    margin-top: 1rem;
+    padding: 8px 12px;
+    background: #111;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    color: #888;
+    text-align: left;
+    font-family: monospace;
+  }
+  .debug-panel span { color: #0ff; }
 </style>
 </head>
 <body>
@@ -154,6 +167,13 @@
 
   <div class="cents" id="centsDisplay">0 cents</div>
   <div class="guide" id="guide">마이크를 시작하고 기타를 연주하세요</div>
+
+  <!-- 디버그 패널: 실제 RMS 값 확인용 -->
+  <div class="debug-panel" id="debugPanel" style="display:none">
+    RMS: <span id="rmsVal">-</span> &nbsp;|&nbsp;
+    임계값: <span id="threshVal">0.003</span> &nbsp;|&nbsp;
+    감지: <span id="detectVal">-</span>
+  </div>
 </div>
 
 <script>
@@ -205,16 +225,29 @@ async function toggleTuner() {
     return;
   }
   try {
-    stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    audioCtx = new AudioContext();
+    // iOS에서 노이즈 제거 기능들이 기타 소리를 잡음으로 처리하므로 모두 끔
+    stream = await navigator.mediaDevices.getUserMedia({
+      audio: {
+        echoCancellation: false,
+        noiseSuppression: false,
+        autoGainControl: false,
+        channelCount: 1,
+      }
+    });
+    // iOS Safari 호환성 (webkitAudioContext 폴백)
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    // iOS는 터치 후에도 AudioContext가 suspended 상태일 수 있음
+    if (audioCtx.state === 'suspended') await audioCtx.resume();
     const source = audioCtx.createMediaStreamSource(stream);
     analyser = audioCtx.createAnalyser();
-    analyser.fftSize = 4096;
+    analyser.fftSize = 8192; // 낮은 음(6번줄 E2=82Hz) 감지 정밀도 향상
+    analyser.smoothingTimeConstant = 0.5; // 변동 완화
     source.connect(analyser);
 
     isRunning = true;
     btn.textContent = '정지';
     btn.classList.add('active');
+    document.getElementById('debugPanel').style.display = 'block';
     detect();
   } catch (e) {
     document.getElementById('guide').textContent = '마이크 접근이 거부되었습니다';
@@ -236,53 +269,72 @@ function stopTuner() {
   document.getElementById('guide').textContent = '마이크를 시작하고 기타를 연주하세요';
 }
 
-// Autocorrelation 피치 감지
+// 기타 특화 피치 감지 (기타 주파수 범위만 검색하는 최적화된 자기상관)
 function autoCorrelate(buf, sampleRate) {
-  // 신호 크기 확인 (너무 작으면 무시)
+  const len = buf.length;
+
+  // RMS 계산
   let rms = 0;
-  for (let i = 0; i < buf.length; i++) rms += buf[i] * buf[i];
-  rms = Math.sqrt(rms / buf.length);
-  if (rms < 0.01) return -1;
+  for (let i = 0; i < len; i++) rms += buf[i] * buf[i];
+  rms = Math.sqrt(rms / len);
 
-  // 앞뒤 무음 구간 자르기
-  let r1 = 0, r2 = buf.length - 1;
-  const threshold = 0.2;
-  for (let i = 0; i < buf.length / 2; i++) {
-    if (Math.abs(buf[i]) < threshold) { r1 = i; } else break;
+  // 디버그 표시
+  const rmsEl = document.getElementById('rmsVal');
+  if (rmsEl) rmsEl.textContent = rms.toFixed(5);
+
+  if (rms < 0.001) {
+    const dEl = document.getElementById('detectVal');
+    if (dEl) dEl.textContent = `미달 (rms=${rms.toFixed(4)})`;
+    return -1;
   }
-  for (let i = buf.length - 1; i >= buf.length / 2; i--) {
-    if (Math.abs(buf[i]) < threshold) { r2 = i; } else break;
-  }
 
-  const trimmed = buf.slice(r1, r2);
-  const len = trimmed.length;
+  // 기타 주파수 범위만 검색: 70Hz(저음) ~ 1400Hz(고음)
+  // → lag 범위만 계산해서 O(n²) 대신 O(n * 범위) 로 대폭 단축
+  const minLag = Math.floor(sampleRate / 1400); // ~31 샘플
+  const maxLag = Math.floor(sampleRate / 70);   // ~630 샘플
+  const searchLen = Math.min(len - maxLag, 4096); // 검색 창 4096으로 제한
 
-  // Autocorrelation
-  const c = new Float32Array(len);
-  for (let i = 0; i < len; i++) {
-    for (let j = 0; j < len - i; j++) {
-      c[i] += trimmed[j] * trimmed[j + i];
+  if (searchLen < 512) return -1;
+
+  let bestLag = -1;
+  let bestCorr = -Infinity;
+
+  for (let lag = minLag; lag <= maxLag; lag++) {
+    let corr = 0;
+    for (let i = 0; i < searchLen; i++) {
+      corr += buf[i] * buf[i + lag];
+    }
+    // 길이로 정규화
+    corr /= searchLen;
+    if (corr > bestCorr) {
+      bestCorr = corr;
+      bestLag = lag;
     }
   }
 
-  // 첫 번째 dip 이후 최대값 찾기
-  let d = 0;
-  while (c[d] > c[d + 1]) d++;
-
-  let maxVal = -1, maxPos = -1;
-  for (let i = d; i < len; i++) {
-    if (c[i] > maxVal) { maxVal = c[i]; maxPos = i; }
+  // 상관값이 너무 낮으면 무시 (잡음 필터)
+  if (bestLag === -1 || bestCorr < rms * rms * 0.1) {
+    const dEl = document.getElementById('detectVal');
+    if (dEl) dEl.textContent = `상관값 미달`;
+    return -1;
   }
 
   // 포물선 보간으로 정밀도 향상
-  const t0 = maxPos > 0 ? c[maxPos - 1] : c[maxPos];
-  const t1 = c[maxPos];
-  const t2 = maxPos < len - 1 ? c[maxPos + 1] : c[maxPos];
-  const a = (t0 + t2 - 2 * t1) / 2;
-  const b = (t2 - t0) / 2;
-  const betterPos = a ? maxPos - b / (2 * a) : maxPos;
+  const prev = bestLag > minLag ? bestLag - 1 : bestLag;
+  const next = bestLag < maxLag ? bestLag + 1 : bestLag;
+  let c0 = 0, c1 = 0, c2 = 0;
+  for (let i = 0; i < searchLen; i++) {
+    c0 += buf[i] * buf[i + prev];
+    c1 += buf[i] * buf[i + bestLag];
+    c2 += buf[i] * buf[i + next];
+  }
+  c0 /= searchLen; c1 /= searchLen; c2 /= searchLen;
 
-  return sampleRate / betterPos;
+  const a = (c0 + c2 - 2 * c1) / 2;
+  const b = (c2 - c0) / 2;
+  const refinedLag = a !== 0 ? bestLag - b / (2 * a) : bestLag;
+
+  return sampleRate / refinedLag;
 }
 
 // 주파수 → 가장 가까운 음이름 + 옥타브
@@ -314,7 +366,9 @@ function detect() {
   analyser.getFloatTimeDomainData(buf);
 
   const freq = autoCorrelate(buf, audioCtx.sampleRate);
-  if (freq === -1) return; // 소리 없음
+  if (freq === -1) return; // 소리 없음 (RMS 미달)
+  const dEl = document.getElementById('detectVal');
+  if (dEl) dEl.textContent = `${freq.toFixed(1)} Hz`;
 
   const noteInfo = freqToNote(freq);
   const cents = noteInfo.cents;
