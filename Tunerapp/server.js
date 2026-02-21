@@ -1,16 +1,90 @@
 const express = require('express');
 const WebSocket = require('ws');
-const path = require('path');
 const http = require('http');
 
 const app = express();
 const PORT = 8000;
 
+// 튜너 HTML은 캐시 금지 (iPhone Safari 캐시 문제 방지)
+app.get('/tuner', (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  res.sendFile(__dirname + '/index.html');
+});
+app.get('/tuner/index.html', (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  res.sendFile(__dirname + '/index.html');
+});
+
 // 정적 파일 제공 - 튜너 앱
 app.use('/tuner', express.static(__dirname));
 
-// Unity WebGL 연습 앱 (빌드 후 활성화)
-app.use('/practice', express.static(path.join(__dirname, '..', 'UnityApp', 'Builds', 'WebGL')));
+// Unity WebGL 파일 헤더 설정 미들웨어 (압축 + 비압축 모두 처리)
+app.use('/practice', (req, res, next) => {
+  const path = req.path;
+
+  // Brotli 압축 파일 (.br)
+  if (path.endsWith('.br')) {
+    res.set('Content-Encoding', 'br');
+
+    // 원본 파일 타입 감지 (.xxx.br 형태에서 확장자 추출)
+    if (path.includes('.js.br')) {
+      res.set('Content-Type', 'application/javascript; charset=utf-8');
+    } else if (path.includes('.wasm.br')) {
+      res.set('Content-Type', 'application/wasm');
+    } else if (path.includes('.data.br')) {
+      res.set('Content-Type', 'application/octet-stream');
+    } else if (path.includes('.json.br')) {
+      res.set('Content-Type', 'application/json; charset=utf-8');
+    } else if (path.includes('.symbols.json.br')) {
+      res.set('Content-Type', 'application/octet-stream');
+    }
+  }
+
+  // Gzip 압축 파일 (.gz)
+  else if (path.endsWith('.gz')) {
+    res.set('Content-Encoding', 'gzip');
+
+    if (path.includes('.js.gz')) {
+      res.set('Content-Type', 'application/javascript; charset=utf-8');
+    } else if (path.includes('.wasm.gz')) {
+      res.set('Content-Type', 'application/wasm');
+    } else if (path.includes('.data.gz')) {
+      res.set('Content-Type', 'application/octet-stream');
+    } else if (path.includes('.json.gz')) {
+      res.set('Content-Type', 'application/json; charset=utf-8');
+    }
+  }
+
+  // 압축되지 않은 파일들 (MIME 타입 명시)
+  else {
+    if (path.endsWith('.js')) {
+      res.set('Content-Type', 'application/javascript; charset=utf-8');
+    } else if (path.endsWith('.wasm')) {
+      res.set('Content-Type', 'application/wasm');
+    } else if (path.endsWith('.json')) {
+      res.set('Content-Type', 'application/json; charset=utf-8');
+    } else if (path.endsWith('.css')) {
+      res.set('Content-Type', 'text/css; charset=utf-8');
+    } else if (path.endsWith('.html')) {
+      res.set('Content-Type', 'text/html; charset=utf-8');
+    }
+    // 이미지 파일
+    else if (path.endsWith('.png')) {
+      res.set('Content-Type', 'image/png');
+    } else if (path.endsWith('.jpg') || path.endsWith('.jpeg')) {
+      res.set('Content-Type', 'image/jpeg');
+    } else if (path.endsWith('.ico')) {
+      res.set('Content-Type', 'image/x-icon');
+    } else if (path.endsWith('.svg')) {
+      res.set('Content-Type', 'image/svg+xml');
+    }
+  }
+
+  next();
+});
+
+// Unity WebGL 연습 앱 (Docker 볼륨 마운트)
+app.use('/practice', express.static('/app/practice'));
 
 // 루트 접근 시 튜너로 리다이렉트
 app.get('/', (req, res) => {

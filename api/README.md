@@ -139,8 +139,6 @@ uvicorn main:app --reload --port 8080
 | 엔드포인트 | 메서드 | 설명 |
 |-----------|--------|------|
 | `/api/explain-chord` | POST | 코드 설명 생성 |
-| `/api/alternative-fingering` | POST | 대체 운지법 추천 |
-| `/api/practice-routine` | POST | 맞춤형 연습 루틴 생성 |
 | `/health` | GET | 헬스체크 |
 
 ### 예시: 코드 설명 요청
@@ -232,8 +230,6 @@ ngrok http 8000
 │  ┌──────────────────────────────────┐   │
 │  │ 🐳 FastAPI (AI 엔진)              │   │
 │  │    → 코드 설명                    │   │
-│  │    → 운지법 추천                  │   │
-│  │    → 연습 루틴 생성               │   │
 │  └──────────────────────────────────┘   │
 │  ┌──────────────────────────────────┐   │
 │  │ 🐳 MongoDB                        │   │
@@ -245,27 +241,179 @@ ngrok http 8000
 
 ---
 
-## 📝 MVP 기능
+## 📝 MVP 목표
 
-### ✅ 구현 완료
-- [x] 기타 튜너 (피치 감지, 실시간 시각화)
-- [x] WebSocket 원격 디스플레이 (iPhone → PC)
-- [x] Unity C# 스크립트 (DSP 타이밍, 지판 렌더링)
-- [x] FastAPI AI 서버 (코드 설명, 운지법 추천)
-- [x] Docker 통합 환경
+**곡(코드 진행)을 선택하면 운지법이 타이밍에 맞춰 지판에 점등되는 것**
 
-### 🚧 Unity 에디터 작업 필요
-- [ ] ScriptableObject 에셋 생성 (5개 코드: C, G, Am, F, D)
-- [ ] 씬 구성 (GameManager, Fretboard, UICanvas)
-- [ ] 프리팹 생성 (FretMarker, StringLine)
-- [ ] 메트로놈 사운드 추가
-- [ ] WebGL 빌드 및 테스트
+---
 
-### 🔮 향후 추가 예정
-- [ ] LLM 연동 (OpenAI/Claude/로컬 모델)
-- [ ] 사용자 진행도 추적 (MongoDB)
-- [ ] 강화학습 기반 맞춤형 추천
-- [ ] 3D 지판 렌더링
+## 🔍 현재 상태 진단
+
+### ✅ C# 코드 레벨 - 완성
+
+| 컴포넌트 | 상태 | 설명 |
+|---|---|---|
+| `TimingEngine` | ✅ 완성 | DSP 기반 비트/마디 타이밍 |
+| `PracticeSessionController` | ✅ 완성 | 마디 바뀔 때 코드 전환 |
+| `FretboardRenderer` + `FretMarker` | ✅ 완성 | 지판 렌더링 + 점등 애니메이션 |
+| `ChordSelector` | ✅ 완성 | 드롭다운 4개로 코드 진행 선택 |
+| `ChordProgressionPanel` | ✅ 완성 | 현재 재생 코드 하이라이트 |
+| `TransportControls` | ✅ 완성 | Play/Stop 버튼 |
+| `BPMControl` | ✅ 완성 | BPM 슬라이더 |
+
+### ❌ 미완성 (Unity Editor 레벨)
+
+- 씬에서 Inspector 연결 미완
+- `ChordDatabase` ScriptableObject에 실제 운지 데이터 미입력 (5개 코드 FretPosition)
+- `ChordSlot` 프리팹 미생성
+- WebGL 빌드 미완
+
+---
+
+## 🎮 MVP 사용자 워크플로우
+
+```
+[코드 진행 선택]
+  드롭다운 4개에서 코드 선택
+  (C→G→Am→F 프리셋 or 직접 선택)
+        ↓
+[BPM 설정]
+  슬라이더로 BPM 조정
+        ↓
+[Play 버튼]
+  TimingEngine 시작
+        ↓
+[마디마다 자동 전환] ← 루프
+  코드 A 점등 (1마디)
+  코드 B 점등 (2마디)
+  코드 C 점등 (3마디)
+  코드 D 점등 (4마디)
+        ↓
+[Stop 버튼]
+  지판 초기화
+```
+
+---
+
+## 🚀 구현/배포 파이프라인
+
+### Phase 1: Unity Editor 작업 (블로커)
+
+코드는 완성 상태이며, Unity Editor에서 데이터 입력과 Inspector 연결이 필요합니다.
+
+**1. ChordDatabase ScriptableObject 데이터 입력**
+- 5개 코드(C, G, Am, F, D)에 FretPosition 데이터 직접 입력
+
+**2. ChordSlot 프리팹 생성**
+- Image + TextMeshPro 조합
+
+**3. 씬 Inspector 연결 완료**
+
+```
+GameManager (PracticeSessionController)
+  ├─ TimingEngine 연결
+  ├─ FretboardRenderer 연결
+  ├─ ChordDatabase 연결
+  └─ ChordProgressionPanel 연결
+
+Canvas
+  ├─ TransportControls → PlayBtn, StopBtn 연결
+  ├─ BPMControl        → Slider 연결
+  ├─ ChordSelector     → Dropdown 4개 연결
+  └─ ChordProgressionPanel → SlotPrefab, SlotsParent 연결
+```
+
+**4. Play Mode 테스트**
+- 코드 선택 → Play → 지판 점등 확인
+
+---
+
+### Phase 2: 빌드 & 배포
+
+**5. WebGL 빌드**
+```
+File → Build Settings → WebGL → Build
+출력: GuitarPracticeUnity/Builds/WebGL/
+```
+
+**6. Docker 서빙**
+```bash
+docker compose restart
+# 접속: http://localhost:8000/practice
+```
+
+node-server가 `/practice` 경로로 WebGL 빌드를 서빙합니다.
+
+---
+
+### Phase 3: 코칭 고도화 (`fingering-coach-agent` 담당)
+
+**7. SongData ScriptableObject 추가**
+- "곡 이름" + "코드 진행 프리셋" 묶음
+- 드롭다운으로 "곡 선택" UX 구현
+
+**8. 튜너 통합**
+- iPhone으로 소리 내면 현재 코드와 일치 여부 표시
+
+**9. 코칭 UI 고도화**
+- 현재 코드 / 다음 코드 / 코칭 힌트 패널 표시
+- 경량 텔레메트리 이벤트: `chord_completed`, `retry_count`, `common_error_type` (PII 없음)
+
+**10. Fingering 추천 API**
+
+| 엔드포인트 | 메서드 | 설명 |
+|---|---|---|
+| `/api/recommend-fingering` | POST | 운지법 추천 (휴리스틱 → ML) |
+
+```json
+// Response DTO
+{
+  "suggested_fingering": { "positions": [...], "finger_numbers": [...] },
+  "coaching_messages": ["검지를 더 프렛 가까이", "손목 각도 조정"],
+  "next_exercise": "C→G 전환 연습"
+}
+```
+
+---
+
+### Phase 4: ML 인식 (`chord-recognizer-agent` 담당)
+
+> 데이터 수집 및 ML 인프라 준비 후 진행
+
+**11. 코드 인식 엔진**
+- 휴리스틱 기반 우선 구현 → 데이터 축적 후 ML 교체
+- 피처 추출 유틸리티 (오디오 → 코드명)
+- 오프라인 평가 스크립트 (정확도 측정)
+
+**12. LLM 연동**
+- OpenAI / Claude / 로컬 모델로 코드 설명 생성
+- `/api/explain-chord` 하드코딩 → LLM 응답으로 교체
+
+**13. 사용자 진행도 추적 (MongoDB)**
+- 세션 로그 저장 (privacy filter 적용)
+- 연습 히스토리 조회 API
+
+---
+
+### Phase 5: 하드웨어 연동 (`hardware-bridge-agent` 담당)
+
+> 하드웨어 타겟(MQTT/BLE/Serial) 확정 후 진행. 보안 검토 필수.
+
+**14. 하드웨어 브릿지 모듈**
+- 전송 방식 1개 선택: MQTT (멀티 디바이스 권장) / BLE / Serial
+- 디바이스 ID 허용 목록 강제 적용
+- 레이트 리밋 (최대 프레임/초)
+- 원격 호출 시 인증 토큰 필수
+
+| 엔드포인트 | 메서드 | 설명 |
+|---|---|---|
+| `/api/hardware/push-frame` | POST | LED 프레임 데이터 전송 |
+| `/api/hardware/clear` | POST | LED 전체 초기화 |
+
+**15. 보안 요구사항**
+- 자격증명 환경변수 관리 (하드코딩 금지)
+- 원격 연결 활성화 전 보안 검토 필수
+- ML 로직과 브릿지 모듈 분리 유지
 
 ---
 

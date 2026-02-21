@@ -29,52 +29,6 @@ public class AIClient : MonoBehaviour
         public string[] similar_chords;
     }
 
-    [Serializable]
-    public class AlternativeFingeringRequest
-    {
-        public string chord_name;
-        public string difficulty = "beginner";
-    }
-
-    [Serializable]
-    public class AlternativeFingering
-    {
-        public string name;
-        public string description;
-        public string positions;
-        public string difficulty;
-    }
-
-    [Serializable]
-    public class AlternativeFingeringResponse
-    {
-        public string chord_name;
-        public AlternativeFingering[] alternatives;
-    }
-
-    [Serializable]
-    public class PracticeRoutineRequest
-    {
-        public string skill_level;
-        public int available_time_minutes;
-        public string focus_area;
-    }
-
-    [Serializable]
-    public class RoutineActivity
-    {
-        public string activity;
-        public int duration;
-    }
-
-    [Serializable]
-    public class PracticeRoutineResponse
-    {
-        public RoutineActivity[] routine;
-        public int total_minutes;
-        public string difficulty;
-    }
-
     // ==================== API 호출 메서드 ====================
 
     /// <summary>
@@ -84,31 +38,6 @@ public class AIClient : MonoBehaviour
     {
         var request = new ChordExplainRequest { chord_name = chordName };
         StartCoroutine(PostRequest("/api/explain-chord", request, onSuccess, onError));
-    }
-
-    /// <summary>
-    /// 대체 운지법 요청
-    /// </summary>
-    public void GetAlternativeFingering(string chordName, string difficulty,
-        Action<AlternativeFingeringResponse> onSuccess, Action<string> onError)
-    {
-        var request = new AlternativeFingeringRequest { chord_name = chordName, difficulty = difficulty };
-        StartCoroutine(PostRequest("/api/alternative-fingering", request, onSuccess, onError));
-    }
-
-    /// <summary>
-    /// 연습 루틴 생성 요청
-    /// </summary>
-    public void GeneratePracticeRoutine(string skillLevel, int timeMinutes, string focusArea,
-        Action<PracticeRoutineResponse> onSuccess, Action<string> onError)
-    {
-        var request = new PracticeRoutineRequest
-        {
-            skill_level = skillLevel,
-            available_time_minutes = timeMinutes,
-            focus_area = focusArea
-        };
-        StartCoroutine(PostRequest("/api/practice-routine", request, onSuccess, onError));
     }
 
     // ==================== 헬퍼 메서드 ====================

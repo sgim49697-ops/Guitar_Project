@@ -2,7 +2,8 @@ using UnityEngine;
 
 public class FretMarker : MonoBehaviour
 {
-    private SpriteRenderer spriteRenderer;
+    private MeshRenderer meshRenderer;
+    private MaterialPropertyBlock propBlock;
     private FretboardConfig config;
     private bool isHighlighted;
     private float glowPhase;
@@ -10,8 +11,10 @@ public class FretMarker : MonoBehaviour
     public void Initialize(int stringIdx, int fretIdx, FretboardConfig cfg)
     {
         config = cfg;
-        spriteRenderer = GetComponent<SpriteRenderer>();
-        spriteRenderer.color = config.inactiveMarkerColor;
+        meshRenderer = GetComponent<MeshRenderer>();
+        propBlock = new MaterialPropertyBlock();
+
+        SetColor(config.inactiveMarkerColor);
         transform.localScale = Vector3.one * config.markerSize;
     }
 
@@ -21,11 +24,11 @@ public class FretMarker : MonoBehaviour
         if (active)
         {
             glowPhase = 0f;
-            spriteRenderer.color = config.activeMarkerColor;
+            SetColor(config.activeMarkerColor);
         }
         else
         {
-            spriteRenderer.color = config.inactiveMarkerColor;
+            SetColor(config.inactiveMarkerColor);
         }
     }
 
@@ -37,6 +40,15 @@ public class FretMarker : MonoBehaviour
         glowPhase += Time.deltaTime * 2f;
         float pulse = 0.8f + 0.2f * Mathf.Sin(glowPhase);
         Color c = Color.Lerp(config.activeMarkerColor, config.glowColor, pulse);
-        spriteRenderer.color = c;
+        SetColor(c);
+    }
+
+    private void SetColor(Color color)
+    {
+        if (meshRenderer != null && propBlock != null)
+        {
+            propBlock.SetColor("_Color", color);
+            meshRenderer.SetPropertyBlock(propBlock);
+        }
     }
 }
