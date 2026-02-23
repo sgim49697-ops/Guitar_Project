@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
 public class TransportControls : MonoBehaviour
@@ -10,6 +11,7 @@ public class TransportControls : MonoBehaviour
 
     [SerializeField] private Button playButton;
     [SerializeField] private Button stopButton;
+    [SerializeField] private ChordSelector chordSelector; // null이면 기본 진행 사용
 
 #if UNITY_WEBGL && !UNITY_EDITOR
     [DllImport("__Internal")]
@@ -40,7 +42,22 @@ public class TransportControls : MonoBehaviour
 #endif
 
         int bpm = bpmControl.GetCurrentBPM();
-        sessionController.StartDefaultSession(bpm);
+
+        if (chordSelector != null)
+        {
+            List<string> selected = chordSelector.GetSelectedChords();
+            if (selected == null || selected.Count == 0)
+            {
+                Debug.LogWarning("[TransportControls] 재생목록이 비어 있습니다. 상단 코드 버튼을 눌러 코드를 추가하세요.");
+                return;
+            }
+
+            sessionController.StartCustomSession(selected, bpm);
+        }
+        else
+        {
+            sessionController.StartDefaultSession(bpm);
+        }
 
         // 버튼 상태 전환
         if (playButton != null) playButton.interactable = false;

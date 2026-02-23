@@ -441,3 +441,9 @@ Canvas
 - `api/main.py`
 - `Tunerapp/server.js`
 - `docker-compose.yml`
+
+### 9.8 동기화 운영 규칙 (Linux 미러)
+
+- 정책 문서: `UnityApp/SYNC_POLICY.md`
+- AI 컨텍스트: `UnityApp/CONTEXT_WINDOWS_SOURCE.md`
+- 동기화 스크립트: `scripts/sync_unity_from_windows.sh`

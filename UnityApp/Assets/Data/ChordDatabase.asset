@@ -1,0 +1,784 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-5557977662489215136
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0722757716f58d14b9d7cd587da5518f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ChordData
+  chordName: Dm
+  chordFullName: 
+  positions:
+  - stringIndex: 5
+    fretIndex: -1
+    fingerNumber: 0
+    isMuted: 1
+  - stringIndex: 4
+    fretIndex: -1
+    fingerNumber: 0
+    isMuted: 1
+  - stringIndex: 3
+    fretIndex: 0
+    fingerNumber: 0
+    isMuted: 0
+  - stringIndex: 2
+    fretIndex: 2
+    fingerNumber: 2
+    isMuted: 0
+  - stringIndex: 1
+    fretIndex: 3
+    fingerNumber: 3
+    isMuted: 0
+  - stringIndex: 0
+    fretIndex: 1
+    fingerNumber: 1
+    isMuted: 0
+  fingerNumbers: 
+--- !u!114 &-4033598411671684741
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0722757716f58d14b9d7cd587da5518f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ChordData
+  chordName: Em
+  chordFullName: 
+  positions:
+  - stringIndex: 5
+    fretIndex: 0
+    fingerNumber: 0
+    isMuted: 0
+  - stringIndex: 4
+    fretIndex: 2
+    fingerNumber: 2
+    isMuted: 0
+  - stringIndex: 3
+    fretIndex: 2
+    fingerNumber: 3
+    isMuted: 0
+  - stringIndex: 2
+    fretIndex: 0
+    fingerNumber: 0
+    isMuted: 0
+  - stringIndex: 1
+    fretIndex: 0
+    fingerNumber: 0
+    isMuted: 0
+  - stringIndex: 0
+    fretIndex: 0
+    fingerNumber: 0
+    isMuted: 0
+  fingerNumbers: 
+--- !u!114 &-3496008404534990454
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0722757716f58d14b9d7cd587da5518f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ChordData
+  chordName: E
+  chordFullName: 
+  positions:
+  - stringIndex: 5
+    fretIndex: 0
+    fingerNumber: 0
+    isMuted: 0
+  - stringIndex: 4
+    fretIndex: 2
+    fingerNumber: 2
+    isMuted: 0
+  - stringIndex: 3
+    fretIndex: 2
+    fingerNumber: 3
+    isMuted: 0
+  - stringIndex: 2
+    fretIndex: 1
+    fingerNumber: 1
+    isMuted: 0
+  - stringIndex: 1
+    fretIndex: 0
+    fingerNumber: 0
+    isMuted: 0
+  - stringIndex: 0
+    fretIndex: 0
+    fingerNumber: 0
+    isMuted: 0
+  fingerNumbers: 
+--- !u!114 &-2264709854483358810
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0722757716f58d14b9d7cd587da5518f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ChordData
+  chordName: G
+  chordFullName: 
+  positions:
+  - stringIndex: 5
+    fretIndex: 3
+    fingerNumber: 2
+    isMuted: 0
+  - stringIndex: 4
+    fretIndex: 2
+    fingerNumber: 1
+    isMuted: 0
+  - stringIndex: 3
+    fretIndex: 0
+    fingerNumber: 0
+    isMuted: 0
+  - stringIndex: 2
+    fretIndex: 0
+    fingerNumber: 0
+    isMuted: 0
+  - stringIndex: 1
+    fretIndex: 0
+    fingerNumber: 0
+    isMuted: 0
+  - stringIndex: 0
+    fretIndex: 3
+    fingerNumber: 3
+    isMuted: 0
+  fingerNumbers: 
+--- !u!114 &-1433490896744395433
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0722757716f58d14b9d7cd587da5518f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ChordData
+  chordName: C
+  chordFullName: 
+  positions:
+  - stringIndex: 5
+    fretIndex: 3
+    fingerNumber: 3
+    isMuted: 0
+  - stringIndex: 4
+    fretIndex: 2
+    fingerNumber: 2
+    isMuted: 0
+  - stringIndex: 3
+    fretIndex: 0
+    fingerNumber: 0
+    isMuted: 0
+  - stringIndex: 2
+    fretIndex: 1
+    fingerNumber: 1
+    isMuted: 0
+  - stringIndex: 1
+    fretIndex: 0
+    fingerNumber: 0
+    isMuted: 0
+  - stringIndex: 0
+    fretIndex: 0
+    fingerNumber: 0
+    isMuted: 0
+  fingerNumbers: 
+--- !u!114 &-844265754828345359
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0722757716f58d14b9d7cd587da5518f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ChordData
+  chordName: D
+  chordFullName: 
+  positions:
+  - stringIndex: 5
+    fretIndex: -1
+    fingerNumber: 0
+    isMuted: 1
+  - stringIndex: 4
+    fretIndex: -1
+    fingerNumber: 0
+    isMuted: 1
+  - stringIndex: 3
+    fretIndex: 0
+    fingerNumber: 0
+    isMuted: 0
+  - stringIndex: 2
+    fretIndex: 2
+    fingerNumber: 1
+    isMuted: 0
+  - stringIndex: 1
+    fretIndex: 3
+    fingerNumber: 3
+    isMuted: 0
+  - stringIndex: 0
+    fretIndex: 2
+    fingerNumber: 2
+    isMuted: 0
+  fingerNumbers: 
+--- !u!114 &-793908350185583314
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0722757716f58d14b9d7cd587da5518f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ChordData
+  chordName: A
+  chordFullName: 
+  positions:
+  - stringIndex: 5
+    fretIndex: -1
+    fingerNumber: 0
+    isMuted: 1
+  - stringIndex: 4
+    fretIndex: 0
+    fingerNumber: 0
+    isMuted: 0
+  - stringIndex: 3
+    fretIndex: 2
+    fingerNumber: 1
+    isMuted: 0
+  - stringIndex: 2
+    fretIndex: 2
+    fingerNumber: 2
+    isMuted: 0
+  - stringIndex: 1
+    fretIndex: 2
+    fingerNumber: 3
+    isMuted: 0
+  - stringIndex: 0
+    fretIndex: 0
+    fingerNumber: 0
+    isMuted: 0
+  fingerNumbers: 
+--- !u!114 &-277543117566616497
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0722757716f58d14b9d7cd587da5518f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ChordData
+  chordName: Am
+  chordFullName: 
+  positions:
+  - stringIndex: 5
+    fretIndex: -1
+    fingerNumber: 0
+    isMuted: 1
+  - stringIndex: 4
+    fretIndex: 0
+    fingerNumber: 0
+    isMuted: 0
+  - stringIndex: 3
+    fretIndex: 2
+    fingerNumber: 2
+    isMuted: 0
+  - stringIndex: 2
+    fretIndex: 2
+    fingerNumber: 3
+    isMuted: 0
+  - stringIndex: 1
+    fretIndex: 1
+    fingerNumber: 1
+    isMuted: 0
+  - stringIndex: 0
+    fretIndex: 0
+    fingerNumber: 0
+    isMuted: 0
+  fingerNumbers: 
+--- !u!114 &1000001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0722757716f58d14b9d7cd587da5518f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ChordData
+  chordName: A
+  chordFullName: A Major
+  positions:
+  - stringIndex: 5
+    fretIndex: -1
+    fingerNumber: 0
+    isMuted: 1
+  - stringIndex: 4
+    fretIndex: 0
+    fingerNumber: 0
+    isMuted: 0
+  - stringIndex: 3
+    fretIndex: 2
+    fingerNumber: 1
+    isMuted: 0
+  - stringIndex: 2
+    fretIndex: 2
+    fingerNumber: 2
+    isMuted: 0
+  - stringIndex: 1
+    fretIndex: 2
+    fingerNumber: 3
+    isMuted: 0
+  - stringIndex: 0
+    fretIndex: 0
+    fingerNumber: 0
+    isMuted: 0
+  fingerNumbers: 
+--- !u!114 &1000002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0722757716f58d14b9d7cd587da5518f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ChordData
+  chordName: E
+  chordFullName: E Major
+  positions:
+  - stringIndex: 5
+    fretIndex: 0
+    fingerNumber: 0
+    isMuted: 0
+  - stringIndex: 4
+    fretIndex: 2
+    fingerNumber: 2
+    isMuted: 0
+  - stringIndex: 3
+    fretIndex: 2
+    fingerNumber: 3
+    isMuted: 0
+  - stringIndex: 2
+    fretIndex: 1
+    fingerNumber: 1
+    isMuted: 0
+  - stringIndex: 1
+    fretIndex: 0
+    fingerNumber: 0
+    isMuted: 0
+  - stringIndex: 0
+    fretIndex: 0
+    fingerNumber: 0
+    isMuted: 0
+  fingerNumbers: 
+--- !u!114 &1000003
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0722757716f58d14b9d7cd587da5518f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ChordData
+  chordName: Dm
+  chordFullName: D Minor
+  positions:
+  - stringIndex: 5
+    fretIndex: -1
+    fingerNumber: 0
+    isMuted: 1
+  - stringIndex: 4
+    fretIndex: -1
+    fingerNumber: 0
+    isMuted: 1
+  - stringIndex: 3
+    fretIndex: 0
+    fingerNumber: 0
+    isMuted: 0
+  - stringIndex: 2
+    fretIndex: 2
+    fingerNumber: 2
+    isMuted: 0
+  - stringIndex: 1
+    fretIndex: 3
+    fingerNumber: 4
+    isMuted: 0
+  - stringIndex: 0
+    fretIndex: 1
+    fingerNumber: 1
+    isMuted: 0
+  fingerNumbers: 
+--- !u!114 &1000004
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0722757716f58d14b9d7cd587da5518f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ChordData
+  chordName: Em
+  chordFullName: E Minor
+  positions:
+  - stringIndex: 5
+    fretIndex: 0
+    fingerNumber: 0
+    isMuted: 0
+  - stringIndex: 4
+    fretIndex: 2
+    fingerNumber: 2
+    isMuted: 0
+  - stringIndex: 3
+    fretIndex: 2
+    fingerNumber: 3
+    isMuted: 0
+  - stringIndex: 2
+    fretIndex: 0
+    fingerNumber: 0
+    isMuted: 0
+  - stringIndex: 1
+    fretIndex: 0
+    fingerNumber: 0
+    isMuted: 0
+  - stringIndex: 0
+    fretIndex: 0
+    fingerNumber: 0
+    isMuted: 0
+  fingerNumbers: 
+--- !u!114 &1000005
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0722757716f58d14b9d7cd587da5518f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ChordData
+  chordName: Fmaj7
+  chordFullName: F Major 7 (Easy F)
+  positions:
+  - stringIndex: 5
+    fretIndex: -1
+    fingerNumber: 0
+    isMuted: 1
+  - stringIndex: 4
+    fretIndex: -1
+    fingerNumber: 0
+    isMuted: 1
+  - stringIndex: 3
+    fretIndex: 3
+    fingerNumber: 3
+    isMuted: 0
+  - stringIndex: 2
+    fretIndex: 2
+    fingerNumber: 2
+    isMuted: 0
+  - stringIndex: 1
+    fretIndex: 1
+    fingerNumber: 1
+    isMuted: 0
+  - stringIndex: 0
+    fretIndex: 0
+    fingerNumber: 0
+    isMuted: 0
+  fingerNumbers: 
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cc26828f23a904c4e8e58d8f2a28d27c, type: 3}
+  m_Name: ChordDatabase
+  m_EditorClassIdentifier: Assembly-CSharp::ChordDatabase
+  chords:
+  - {fileID: -1433490896744395433}
+  - {fileID: 3971012785779333850}
+  - {fileID: -277543117566616497}
+  - {fileID: 658744641748900292}
+  - {fileID: -844265754828345359}
+  - {fileID: -4033598411671684741}
+  - {fileID: -793908350185583314}
+  - {fileID: -3496008404534990454}
+  - {fileID: -5557977662489215136}
+--- !u!114 &658744641748900292
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0722757716f58d14b9d7cd587da5518f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ChordData
+  chordName: F
+  chordFullName: 
+  positions:
+  - stringIndex: 5
+    fretIndex: 1
+    fingerNumber: 1
+    isMuted: 0
+  - stringIndex: 4
+    fretIndex: 3
+    fingerNumber: 3
+    isMuted: 0
+  - stringIndex: 3
+    fretIndex: 3
+    fingerNumber: 4
+    isMuted: 0
+  - stringIndex: 2
+    fretIndex: 2
+    fingerNumber: 2
+    isMuted: 0
+  - stringIndex: 1
+    fretIndex: 1
+    fingerNumber: 1
+    isMuted: 0
+  - stringIndex: 0
+    fretIndex: 1
+    fingerNumber: 1
+    isMuted: 0
+  fingerNumbers: 
+--- !u!114 &1547619468452345139
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0722757716f58d14b9d7cd587da5518f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ChordData
+  chordName: D
+  chordFullName: 
+  positions:
+  - stringIndex: 5
+    fretIndex: -1
+    fingerNumber: 0
+    isMuted: 1
+  - stringIndex: 4
+    fretIndex: -1
+    fingerNumber: 0
+    isMuted: 1
+  - stringIndex: 3
+    fretIndex: 0
+    fingerNumber: 0
+    isMuted: 0
+  - stringIndex: 2
+    fretIndex: 2
+    fingerNumber: 1
+    isMuted: 0
+  - stringIndex: 1
+    fretIndex: 3
+    fingerNumber: 3
+    isMuted: 0
+  - stringIndex: 0
+    fretIndex: 2
+    fingerNumber: 2
+    isMuted: 0
+  fingerNumbers: 
+--- !u!114 &2165600103504207213
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0722757716f58d14b9d7cd587da5518f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ChordData
+  chordName: Am
+  chordFullName: 
+  positions:
+  - stringIndex: 5
+    fretIndex: -1
+    fingerNumber: 0
+    isMuted: 1
+  - stringIndex: 4
+    fretIndex: 0
+    fingerNumber: 0
+    isMuted: 0
+  - stringIndex: 3
+    fretIndex: 2
+    fingerNumber: 2
+    isMuted: 0
+  - stringIndex: 2
+    fretIndex: 2
+    fingerNumber: 3
+    isMuted: 0
+  - stringIndex: 1
+    fretIndex: 1
+    fingerNumber: 1
+    isMuted: 0
+  - stringIndex: 0
+    fretIndex: 0
+    fingerNumber: 0
+    isMuted: 0
+  fingerNumbers: 
+--- !u!114 &3971012785779333850
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0722757716f58d14b9d7cd587da5518f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ChordData
+  chordName: G
+  chordFullName: 
+  positions:
+  - stringIndex: 5
+    fretIndex: 3
+    fingerNumber: 2
+    isMuted: 0
+  - stringIndex: 4
+    fretIndex: 2
+    fingerNumber: 1
+    isMuted: 0
+  - stringIndex: 3
+    fretIndex: 0
+    fingerNumber: 0
+    isMuted: 0
+  - stringIndex: 2
+    fretIndex: 0
+    fingerNumber: 0
+    isMuted: 0
+  - stringIndex: 1
+    fretIndex: 0
+    fingerNumber: 0
+    isMuted: 0
+  - stringIndex: 0
+    fretIndex: 3
+    fingerNumber: 3
+    isMuted: 0
+  fingerNumbers: 
+--- !u!114 &5978798728911213553
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0722757716f58d14b9d7cd587da5518f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ChordData
+  chordName: F
+  chordFullName: 
+  positions:
+  - stringIndex: 5
+    fretIndex: 1
+    fingerNumber: 1
+    isMuted: 0
+  - stringIndex: 4
+    fretIndex: 3
+    fingerNumber: 3
+    isMuted: 0
+  - stringIndex: 3
+    fretIndex: 3
+    fingerNumber: 4
+    isMuted: 0
+  - stringIndex: 2
+    fretIndex: 2
+    fingerNumber: 2
+    isMuted: 0
+  - stringIndex: 1
+    fretIndex: 1
+    fingerNumber: 1
+    isMuted: 0
+  - stringIndex: 0
+    fretIndex: 1
+    fingerNumber: 1
+    isMuted: 0
+  fingerNumbers: 
+--- !u!114 &6878159958994391746
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0722757716f58d14b9d7cd587da5518f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ChordData
+  chordName: C
+  chordFullName: 
+  positions:
+  - stringIndex: 5
+    fretIndex: -1
+    fingerNumber: 0
+    isMuted: 1
+  - stringIndex: 4
+    fretIndex: 3
+    fingerNumber: 3
+    isMuted: 0
+  - stringIndex: 3
+    fretIndex: 2
+    fingerNumber: 2
+    isMuted: 0
+  - stringIndex: 2
+    fretIndex: 0
+    fingerNumber: 0
+    isMuted: 0
+  - stringIndex: 1
+    fretIndex: 1
+    fingerNumber: 1
+    isMuted: 0
+  - stringIndex: 0
+    fretIndex: 0
+    fingerNumber: 0
+    isMuted: 0
+  fingerNumbers: 
