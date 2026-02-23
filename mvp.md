@@ -345,3 +345,99 @@ Canvas
 | Python 패키지 관리 | uv (`uv pip install`, bare pip 금지) |
 | Docker | `docker compose restart` |
 | 서비스 포트 | 8000 (Express), 8080 (FastAPI) |
+
+---
+
+## 9. 최종 MVP 본 (2026-02-23 기준)
+
+본 섹션은 상위 기록 대비 최신 상태 우선(override) 기준이며, 실사용 Unity 경로는 `/mnt/c/Projects/Project_Guitar/GuitarPracticeUnity/`이다. 저장소 내부 `UnityApp/`는 참고본(비활성)으로 분리 표기한다.
+
+### 9.1 MVP 최종 정의
+
+- 성공 기준: `코드 선택/구성 → BPM 설정 → Play → 마디 단위 코드 전환 → 지판 점등/예고/슬롯 하이라이트 → Stop`
+- MVP 필수 범위: **Unity 연습 루프** (코드 진행 재생 + 지판 점등 + UI 하이라이트)
+- 비필수(보조/확장): `Tunerapp`, `POST /api/explain-chord`
+
+### 9.2 현재 구현 상태 요약표 (Done / Partial / Not in MVP)
+
+| 구분 | 항목 | 상태 | 근거 |
+|---|---|---|---|
+| Done | `TimingEngine` DSP 루프 | ✅ Done | 비트/마디 이벤트, 루프 완료 이벤트 구현 |
+| Done | `PracticeSessionController` 세션/이벤트 연결 | ✅ Done | `OnBeat`/`OnMeasureStart`/`OnLoopComplete` 구독 기반 전환 |
+| Done | `FretboardRenderer` + `FretMarker` 상태 전환 | ✅ Done | `HighlightChord`, `PreviewNextChord`, `TransitionToChord` + 상태 머신 |
+| Done | `ChordProgressionPanel` 상단 슬롯 + 세션/활성 하이라이트 | ✅ Done | 전체 코드 슬롯 고정 표시 + 세션 강조/현재 코드 강조 |
+| Done | `ChordSelector` 하단 재생목록 (1~8, Add/Remove/Apply/Clear) | ✅ Done | 슬롯 동적 증감 + Apply/Clear 동작 구현 |
+| Done | WebGL 빌드 산출물 | ✅ Done | `Builds/WebGL` 산출물 존재 (`.data.br`, `.wasm.br`, loader 등) |
+| Partial | `ChordInfoPanel`, `AIClient` | ⚠ Partial | UI/클라이언트 존재, 백엔드는 하드코딩 응답 중심 |
+| Not in MVP | ML 코드 인식 (`/api/recommend-fingering`) | ⛔ Not in MVP | 계획만 존재, 미구현 |
+| Not in MVP | 하드웨어 브릿지 (`/api/hardware/*`) | ⛔ Not in MVP | 계획만 존재, 미구현 |
+
+### 9.3 디렉토리/컴포넌트 기준선
+
+- 프로젝트 루트 기준선: `Tunerapp/`, `api/`, 문서/에이전트 정의(`AGENTS.md`, `codex/`, `.claude/agents/`)
+- 실사용 Unity 기준선: `/mnt/c/Projects/Project_Guitar/GuitarPracticeUnity/Assets/Scripts/*`
+- 핵심 데이터 기준선: `Assets/Data/ChordDatabase.asset`
+  - 활성 코드 9개: `C, G, Am, F, D, Em, A, E, Dm`
+  - 참고: `Fmaj7` 데이터 오브젝트는 존재하나 현재 `ChordDatabase.chords` 활성 목록에는 미포함
+
+### 9.4 런타임 동작 최종 플로우
+
+1. Play 클릭 시 `TransportControls.OnPlayClicked()`
+2. `ChordSelector` 연결 시 커스텀 진행 우선, 비어 있으면 경고 후 시작 중단
+3. 진행 목록이 있으면 `StartCustomSession`, 없으면 `StartDefaultSession`
+4. 마지막 비트에서 `PracticeSessionController.OnBeatTick()`이 다음 코드 `Preview` 호출
+5. 마디 시작 시 `OnMeasureChanged()`에서 `TransitionToChord()`로 코드 전환
+6. `ChordProgressionPanel.SetActiveChord(string)`로 현재 슬롯 하이라이트 갱신
+7. Stop 시 타이밍 정지 + UI 인디케이터 리셋, 마지막 운지는 유지(`ClearAllHighlights` 미호출)
+
+### 9.5 공개 API/인터페이스 현황
+
+**현재 제공 FastAPI 엔드포인트**
+- `GET /health`
+- `POST /api/explain-chord`
+- `POST /api/progress`
+
+**계획만 존재하는 엔드포인트 (미구현)**
+- `POST /api/recommend-fingering`
+- `POST /api/hardware/push-frame`
+- `POST /api/hardware/clear`
+
+**Unity 공개 진입점(문서 기준)**
+- `PracticeSessionController.StartDefaultSession(int bpm)`
+- `PracticeSessionController.StartCustomSession(List<string> chordNames, int bpm)`
+- 실제 우선순위: `TransportControls`에서 커스텀 목록이 유효하면 `StartCustomSession` 우선
+
+### 9.6 운영/배포 체크포인트
+
+- Docker 포트 기준:
+  - `8000`: Node/Express (튜너 + Unity WebGL 정적 서빙)
+  - `8080`: FastAPI
+  - `27017`, `8081`: MongoDB/Mongo Express
+- Unity WebGL 서빙 경로:
+  - 빌드 산출물: `/mnt/c/Projects/Project_Guitar/GuitarPracticeUnity/Builds/WebGL`
+  - 컨테이너 마운트: `/app/practice` (read-only)
+  - 외부 접근: `http://localhost:8000/practice`
+- 운영 변경 시 재시작 규칙:
+  - `Tunerapp/server.js` 변경 시 `docker compose restart` 필요
+  - 정적 HTML/CSS/JS 변경은 일반적으로 즉시 반영되나 캐시 영향 가능
+
+### 9.7 MVP 검증 시나리오 (수동 체크리스트)
+
+1. 기본 루프: Play 후 `C→G→Am→F` 4마디 루프 반복 확인
+2. 커스텀 재생목록: 상단 코드 클릭으로 하단 슬롯 채운 뒤 Apply 시 해당 순서 재생 확인
+3. 용량 경계: 슬롯 `1~8` 확장/축소 및 축소 시 초과 선택 항목 자동 절단 확인
+4. 비트 예고: 각 마디 마지막 비트에서 다음 코드 `Preview` 표시 확인
+5. Stop 동작: 재생 중지, 비트 인디케이터 리셋, Play/Stop 버튼 상태 전환 확인
+6. API 보조 기능: `/api/explain-chord` 정상 응답 및 미등록 코드 기본 응답 확인
+7. 서빙 경로: `/practice` WebGL 정적 파일 로드 및 압축 헤더 처리(`.br/.gz`) 확인
+
+**참고 경로 (정적 분석 근거)**
+- `/mnt/c/Projects/Project_Guitar/GuitarPracticeUnity/Assets/Scripts/Session/PracticeSessionController.cs`
+- `/mnt/c/Projects/Project_Guitar/GuitarPracticeUnity/Assets/Scripts/UI/ChordSelector.cs`
+- `/mnt/c/Projects/Project_Guitar/GuitarPracticeUnity/Assets/Scripts/UI/ChordProgressionPanel.cs`
+- `/mnt/c/Projects/Project_Guitar/GuitarPracticeUnity/Assets/Scripts/Fretboard/FretboardRenderer.cs`
+- `/mnt/c/Projects/Project_Guitar/GuitarPracticeUnity/Assets/Scripts/Fretboard/FretMarker.cs`
+- `/mnt/c/Projects/Project_Guitar/GuitarPracticeUnity/Assets/Data/ChordDatabase.asset`
+- `api/main.py`
+- `Tunerapp/server.js`
+- `docker-compose.yml`

@@ -38,6 +38,46 @@ You are responsible for turning chord/fingering guidance into a shippable coachi
 - Use `WebSearch` / `WebFetch` for Unity API, TextMeshPro, FastAPI documentation references.
 - Do not use Bash — file I/O and edits only.
 
+## UI 검증 의무 (필수)
+
+UI 관련 작업을 완료하기 전 반드시 아래 검증을 직접 수행하고 결과를 보고해야 한다.
+사용자에게 "확인해보세요"라고 넘기지 말 것.
+
+### 1. 컴파일 오류 확인
+- `mcp__ide__getDiagnostics` 로 C# 오류 0건 확인
+
+### 2. 씬 구조 검증
+- `mcp__mcp-unity__get_gameobject` 로 생성한 GameObject의 실제 RectTransform 값 확인
+- anchor, offsetMin/Max, sizeDelta 값이 의도한 대로인지 수치로 검증
+
+### 3. 레이아웃 겹침 검증 (핵심)
+- **지판(Fretboard)은 화면 중앙을 차지한다** — UI 패널이 지판을 가리면 안 된다
+- Canvas 해상도 기준으로 각 패널의 실제 픽셀 영역을 계산해서 겹침 여부 확인:
+  ```
+  Canvas 기준 (1151×552):
+  - 지판 영역: 화면 중앙 전체 (보호 구역)
+  - 안전 UI 배치 영역:
+      상단 바:   y = 470~552 (top 80px)
+      하단 바:   y = 0~120   (ControlBar)
+      우측 상단: x = 828~1151, y = 452~552 (HUD)
+  ```
+- 새 UI 패널의 픽셀 영역이 지판 보호 구역과 겹치면 위치를 수정한 뒤 재검증
+
+### 4. 참조 연결 확인
+- 컴포넌트의 serialized field가 null이 아닌지 `get_gameobject` 결과로 확인
+- null 발견 시 `Guitar/Setup Scene References` 또는 `Guitar/Setup UI Controls` 재실행
+
+### 5. 검증 완료 보고 형식
+작업 완료 시 반드시 아래 형식으로 보고:
+```
+## 검증 결과
+- [ ] 컴파일 오류: 0건
+- [ ] 레이아웃 겹침: 없음 (패널 위치: y=470~552)
+- [ ] 참조 연결: 전체 연결됨
+- [ ] 동작 확인: (확인한 내용 기술)
+```
+
 ## Memory
 
-작업하면서 발견한 Unity 씬 구조, 컴포넌트 연결 패턴, DTO 스키마 변경 이력을 memory에 기록해두세요.
+작업하면서 발견한 Unity 씬 구조, 컴포넌트 연결 패턴, DTO 스키마 변경 이력,
+레이아웃 안전 영역 좌표를 memory에 기록해두세요.
