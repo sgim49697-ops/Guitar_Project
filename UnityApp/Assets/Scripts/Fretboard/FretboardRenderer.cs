@@ -1,3 +1,4 @@
+// FretboardRenderer.cs - 기타 지판 렌더링 + 코드 전환 애니메이션 제어
 using UnityEngine;
 
 public class FretboardRenderer : MonoBehaviour
@@ -8,11 +9,17 @@ public class FretboardRenderer : MonoBehaviour
     // 2D 배열: [줄][프렛] -> FretMarker
     private FretMarker[,] markers;
 
-    void Start()
+    // 현재 활성 코드 (TransitionToChord에서 사용)
+    private ChordData currentChord;
+
+    void Awake()
     {
+        Debug.LogWarning("FretboardRenderer Awake() - 지판 생성 시작");
         BuildFretboard();
+        Debug.LogWarning("FretboardRenderer 지판 생성 완료!");
     }
 
+    // ── 지판 빌드 ─────────────────────────────────────────────────────────
     private void BuildFretboard()
     {
         markers = new FretMarker[config.numberOfStrings, config.numberOfFrets + 1];
@@ -20,8 +27,6 @@ public class FretboardRenderer : MonoBehaviour
         for (int s = 0; s < config.numberOfStrings; s++)
         {
             float y = s * config.stringSpacing;
-
-            // 줄 시각화 (LineRenderer)
             DrawString(s, y);
 
             for (int f = 0; f <= config.numberOfFrets; f++)
@@ -36,7 +41,6 @@ public class FretboardRenderer : MonoBehaviour
             }
         }
 
-        // 프렛 와이어 그리기
         DrawFretWires();
     }
 
@@ -92,8 +96,10 @@ public class FretboardRenderer : MonoBehaviour
         }
     }
 
+    // ── 공개 API ──────────────────────────────────────────────────────────
+
     /// <summary>
-    /// 코드 하이라이트: 해당 코드의 포지션을 발광 표시
+    /// 코드 하이라이트 (즉시). 세션 시작 첫 코드에 사용.
     /// </summary>
     public void HighlightChord(ChordData chord)
     {
@@ -101,22 +107,114 @@ public class FretboardRenderer : MonoBehaviour
 
         foreach (var pos in chord.positions)
         {
-            if (!pos.isMuted && pos.fretIndex >= 0
-                && pos.stringIndex >= 0 && pos.stringIndex < config.numberOfStrings
-                && pos.fretIndex <= config.numberOfFrets)
-            {
+            if (IsValidPosition(pos) && !pos.isMuted)
                 markers[pos.stringIndex, pos.fretIndex].SetActive(true);
-            }
+        }
+
+        currentChord = chord;
+    }
+
+    /// <summary>
+    /// 모든 하이라이트 즉시 해제.
+    /// </summary>
+    public void ClearAllHighlights()
+    {
+        if (markers == null)
+        {
+            Debug.LogWarning("ClearAllHighlights 호출됐지만 markers가 아직 초기화되지 않음");
+            return;
+        }
+
+        for (int s = 0; s < config.numberOfStrings; s++)
+            for (int f = 0; f <= config.numberOfFrets; f++)
+                markers[s, f].SetActive(false);
+
+        currentChord = null;
+    }
+
+    /// <summary>
+    /// 다음 코드 예고 표시. 마지막 비트(beat 3)에 호출.
+    /// Active 상태 마커는 건드리지 않는다.
+    /// </summary>
+    public void PreviewNextChord(ChordData nextChord)
+    {
+        if (nextChord == null) return;
+
+        foreach (var pos in nextChord.positions)
+        {
+            if (!IsValidPosition(pos) || pos.isMuted) continue;
+
+            // Active(겹치는 위치) 포함 전부 SetPreview — 노란색도 즉시 dim cyan으로 전환
+            markers[pos.stringIndex, pos.fretIndex].SetPreview();
         }
     }
 
     /// <summary>
-    /// 모든 하이라이트 해제
+    /// 크로스페이드로 다음 코드로 전환. OnMeasureStart에서 호출.
     /// </summary>
-    public void ClearAllHighlights()
+    public void TransitionToChord(ChordData nextChord, float duration)
     {
+        if (nextChord == null) return;
+
+        float fadeDuration = Mathf.Max(duration, 0.05f);
+
+        // 1. 남아있는 Preview 마커 → Inactive (stale 예고 클리어)
         for (int s = 0; s < config.numberOfStrings; s++)
+        {
             for (int f = 0; f <= config.numberOfFrets; f++)
-                markers[s, f].SetActive(false);
+            {
+                FretMarker m = markers[s, f];
+                if (m.CurrentState == FretMarker.State.Preview)
+                    m.CrossfadeToInactive(fadeDuration * 0.3f);
+            }
+        }
+
+        // 2. 현재 코드 마커 처리
+        //    - 겹치는 위치: CrossfadeToInactive 호출 없이 바로 CrossfadeToActive
+        //      (yellow → transparentCyan 즉시 전환 → 새 코드와 동시에 시안 점등)
+        //    - 겹치지 않는 위치: 천천히 fade out
+        if (currentChord != null)
+        {
+            foreach (var pos in currentChord.positions)
+            {
+                if (!IsValidPosition(pos) || pos.isMuted) continue;
+
+                FretMarker m = markers[pos.stringIndex, pos.fretIndex];
+                if (!IsPositionInChord(pos, nextChord))
+                    m.CrossfadeToInactive(fadeDuration * 1.8f);
+                // 겹치는 위치는 아래 step 3에서 CrossfadeToActive만 호출됨
+            }
+        }
+
+        // 3. 다음 코드 마커 → Active (겹치는 위치 포함 전부 시안 점등)
+        foreach (var pos in nextChord.positions)
+        {
+            if (!IsValidPosition(pos) || pos.isMuted) continue;
+            markers[pos.stringIndex, pos.fretIndex].CrossfadeToActive(fadeDuration);
+        }
+
+        // 4. currentChord 갱신
+        currentChord = nextChord;
+    }
+
+    // ── 내부 헬퍼 ─────────────────────────────────────────────────────────
+
+    private bool IsValidPosition(FretPosition pos)
+    {
+        return pos.stringIndex >= 0
+            && pos.stringIndex < config.numberOfStrings
+            && pos.fretIndex >= 0
+            && pos.fretIndex <= config.numberOfFrets;
+    }
+
+    private bool IsPositionInChord(FretPosition pos, ChordData chord)
+    {
+        if (chord == null) return false;
+        foreach (var p in chord.positions)
+        {
+            if (!p.isMuted && p.stringIndex == pos.stringIndex && p.fretIndex == pos.fretIndex)
+                return true;
+        }
+        return false;
     }
 }

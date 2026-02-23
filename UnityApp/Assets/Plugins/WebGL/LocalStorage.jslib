@@ -1,38 +1,54 @@
+// LocalStorage.jslib - Unity WebGL용 브라우저 localStorage + AudioContext 연동
 mergeInto(LibraryManager.library, {
 
-    SaveToLocalStorage: function(keyPtr, valuePtr) {
-        var key = UTF8ToString(keyPtr);
-        var value = UTF8ToString(valuePtr);
-        localStorage.setItem(key, value);
-    },
-
-    LoadFromLocalStorage: function(keyPtr) {
-        var key = UTF8ToString(keyPtr);
-        var value = localStorage.getItem(key);
-        if (value === null) {
-            value = "";
+    SaveToLocalStorage: function(key, value) {
+        try {
+            localStorage.setItem(UTF8ToString(key), UTF8ToString(value));
+        } catch(e) {
+            console.warn('[LocalStorage] SaveToLocalStorage 실패:', e);
         }
-        var bufferSize = lengthBytesUTF8(value) + 1;
-        var buffer = _malloc(bufferSize);
-        stringToUTF8(value, buffer, bufferSize);
-        return buffer;
     },
 
-    HasLocalStorageKey: function(keyPtr) {
-        var key = UTF8ToString(keyPtr);
-        return localStorage.getItem(key) !== null ? 1 : 0;
+    LoadFromLocalStorage: function(key) {
+        try {
+            var val = localStorage.getItem(UTF8ToString(key));
+            if (val === null) val = '';
+            var len = lengthBytesUTF8(val) + 1;
+            var buf = _malloc(len);
+            stringToUTF8(val, buf, len);
+            return buf;
+        } catch(e) {
+            console.warn('[LocalStorage] LoadFromLocalStorage 실패:', e);
+            var empty = _malloc(1);
+            HEAP8[empty] = 0;
+            return empty;
+        }
     },
 
-    RemoveFromLocalStorage: function(keyPtr) {
-        var key = UTF8ToString(keyPtr);
-        localStorage.removeItem(key);
+    HasLocalStorageKey: function(key) {
+        try {
+            return localStorage.getItem(UTF8ToString(key)) !== null ? 1 : 0;
+        } catch(e) {
+            return 0;
+        }
+    },
+
+    RemoveFromLocalStorage: function(key) {
+        try {
+            localStorage.removeItem(UTF8ToString(key));
+        } catch(e) {
+            console.warn('[LocalStorage] RemoveFromLocalStorage 실패:', e);
+        }
     },
 
     UnlockWebAudio: function() {
-        // 브라우저 오디오 컨텍스트 잠금 해제
-        // Unity WebGL은 WEBAudio 객체를 통해 오디오 관리
         if (typeof WEBAudio !== 'undefined' && WEBAudio.audioContext) {
-            WEBAudio.audioContext.resume();
+            WEBAudio.audioContext.resume().then(function() {
+                console.log('[WebGL] AudioContext resumed');
+            }).catch(function(e) {
+                console.warn('[WebGL] AudioContext resume 실패:', e);
+            });
         }
     }
+
 });

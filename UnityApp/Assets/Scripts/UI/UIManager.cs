@@ -27,10 +27,13 @@ public class UIManager : MonoBehaviour
     /// </summary>
     private void UpdateBeatIndicators()
     {
+        if (beatIndicators == null || beatIndicators.Length == 0) return;
+
         int currentBeat = timingEngine.CurrentBeat;
 
         for (int i = 0; i < beatIndicators.Length; i++)
         {
+            if (beatIndicators[i] == null) continue;
             float targetScale = (i == currentBeat) ? 1.3f : 1.0f;
             float current = beatIndicators[i].transform.localScale.x;
             float smoothed = Mathf.Lerp(current, targetScale, Time.deltaTime * 10f);
@@ -65,9 +68,11 @@ public class UIManager : MonoBehaviour
     /// </summary>
     public void ResetIndicators()
     {
+        if (beatIndicators == null) return;
         foreach (var indicator in beatIndicators)
         {
-            indicator.transform.localScale = Vector3.one;
+            if (indicator != null)
+                indicator.transform.localScale = Vector3.one;
         }
     }
 }
