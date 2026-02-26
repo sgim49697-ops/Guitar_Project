@@ -3,41 +3,49 @@
 ## Purpose
 
 `UnityApp/` in this repository is a Linux-side mirror for collaboration and AI context.
-The real Unity source of truth remains the Windows project:
+The Windows project is the execution runtime (Unity Editor), but both sides are editable.
 
-- `/mnt/c/Projects/Project_Guitar/GuitarPracticeUnity`
-
-Windows files must not be edited by this sync workflow.
+- Windows runtime path: `/mnt/c/Projects/Project_Guitar/GuitarPracticeUnity`
+- Linux mirror path: `UnityApp/`
 
 ## Direction
 
-One-way sync only:
+**Bidirectional sync** — choose the direction based on where you made edits:
 
-- `Windows Unity -> Linux repo UnityApp`
+| 수정 위치 | 실행할 명령 |
+|----------|------------|
+| Windows에서 수정 후 Linux 반영 | `bash scripts/sync_unity_from_windows.sh` |
+| Linux에서 수정 후 Windows 반영 | `bash scripts/sync_unity_to_windows.sh` |
 
-Default behavior is add/update only (no delete).
+Both scripts are **add/update only (no delete)** by default.
 
-## Sync Command
+## Sync Commands
 
-Dry-run:
-
+### Windows → Linux
 ```bash
-./scripts/sync_unity_from_windows.sh --dry-run
+# dry-run
+bash scripts/sync_unity_from_windows.sh --dry-run
+
+# apply
+bash scripts/sync_unity_from_windows.sh
 ```
 
-Apply:
-
+### Linux → Windows
 ```bash
-./scripts/sync_unity_from_windows.sh
+# dry-run
+bash scripts/sync_unity_to_windows.sh --dry-run
+
+# apply
+bash scripts/sync_unity_to_windows.sh
 ```
 
-Override source path on another machine:
-
+### 커스텀 경로 사용 시
 ```bash
-UNITY_WIN_SRC=/path/to/GuitarPracticeUnity ./scripts/sync_unity_from_windows.sh --dry-run
+UNITY_WIN_SRC=/path/to/GuitarPracticeUnity bash scripts/sync_unity_from_windows.sh
+UNITY_WIN_SRC=/path/to/GuitarPracticeUnity bash scripts/sync_unity_to_windows.sh
 ```
 
-## Allowlist (Synced)
+## Allowlist (Synced in both directions)
 
 - `Assets/Scripts/**` (including `Editor/**` and `.meta`)
 - `Assets/Data/**` (including `.asset` and `.meta`)
@@ -60,7 +68,12 @@ UNITY_WIN_SRC=/path/to/GuitarPracticeUnity ./scripts/sync_unity_from_windows.sh 
 
 ## Recommended Flow
 
-1. Run dry-run and inspect summary.
-2. Run apply sync.
-3. Review `git status` and staged changes.
-4. Commit only intended mirror updates.
+### AI(Claude/Codex)가 Linux에서 C# 수정 후
+1. `bash scripts/sync_unity_to_windows.sh --dry-run` 으로 변경 내용 확인
+2. `bash scripts/sync_unity_to_windows.sh` 적용
+3. Unity Editor에서 재컴파일 확인 (에러 0건)
+
+### Windows Unity Editor에서 수정 후
+1. `bash scripts/sync_unity_from_windows.sh --dry-run` 으로 변경 내용 확인
+2. `bash scripts/sync_unity_from_windows.sh` 적용
+3. `git status` 확인 후 커밋
