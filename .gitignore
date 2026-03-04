@@ -27,6 +27,9 @@ UnityApp/Assets/AssetStoreTools*
 # Docker
 *.log
 
+# OpenClaw 인증 토큰 (절대 커밋 금지)
+scripts/.openclaw-sandbox/openclaw.json
+
 # OS
 .DS_Store
 Thumbs.db
