@@ -4,6 +4,8 @@ const http = require('http');
 
 const app = express();
 const PORT = 8000;
+const API_HOST = process.env.FASTAPI_HOST || 'ai-api';
+const API_PORT = Number(process.env.FASTAPI_PORT || 8080);
 
 // 튜너 HTML은 캐시 금지 (iPhone Safari 캐시 문제 방지)
 app.get('/tuner', (req, res) => {
@@ -85,6 +87,37 @@ app.use('/practice', (req, res, next) => {
 
 // Unity WebGL 연습 앱 (Docker 볼륨 마운트)
 app.use('/practice', express.static('/app/practice'));
+
+// FastAPI 프록시 (/api/* -> FastAPI:8080)
+app.use('/api', (req, res) => {
+  const options = {
+    hostname: API_HOST,
+    port: API_PORT,
+    path: req.originalUrl,
+    method: req.method,
+    headers: {
+      ...req.headers,
+      host: API_HOST + ':' + API_PORT,
+    },
+  };
+
+  const proxyReq = http.request(options, (proxyRes) => {
+    res.status(proxyRes.statusCode || 502);
+    Object.entries(proxyRes.headers).forEach(([key, value]) => {
+      if (value !== undefined) res.setHeader(key, value);
+    });
+    proxyRes.pipe(res);
+  });
+
+  proxyReq.on('error', (err) => {
+    console.error('API 프록시 오류:', err.message);
+    if (!res.headersSent) {
+      res.status(502).json({ error: 'FastAPI upstream unavailable' });
+    }
+  });
+
+  req.pipe(proxyReq);
+});
 
 // 루트 접근 시 튜너로 리다이렉트
 app.get('/', (req, res) => {

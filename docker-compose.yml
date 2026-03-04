@@ -1,5 +1,81 @@
 services:
+  # ─────────────────────────────────────────
+  # OpenClaw Gateway (전체 Docker 이전)
+  # 기존 설정: ~/.openclaw 볼륨 마운트로 완전 유지
+  # ─────────────────────────────────────────
+  openclaw-gateway:
+    image: ghcr.io/openclaw/openclaw:latest
+    container_name: openclaw-gateway
+    restart: unless-stopped
+    init: true
+    ports:
+      - "18789:18789"   # Gateway WebSocket (Control UI / CLI)
+      - "18790:18790"   # Bridge port
+    environment:
+      # 기존 토큰 그대로 유지 (.env에서 주입)
+      - OPENCLAW_GATEWAY_TOKEN=${OPENCLAW_GATEWAY_TOKEN}
+      # loopback → lan: Docker 네트워크에서 Gateway 접근 가능하게
+      - OPENCLAW_GATEWAY_BIND=lan
+      # ws:// private network 허용 (Docker 내부 통신)
+      - OPENCLAW_ALLOW_INSECURE_PRIVATE_WS=1
+      # 샌드박스: Docker 소켓으로 격리 컨테이너 실행
+      - OPENCLAW_SANDBOX=1
+      # Guitar_Project를 샌드박스 컨테이너에 마운트
+      # 형식: host_path:container_path (호스트 기준 절대경로)
+      # → cron 프롬프트의 /home/sandbox/Guitar_Project/ 경로와 일치
+      - OPENCLAW_EXTRA_MOUNTS=/home/user/projects/Guitar_Project:/home/sandbox/Guitar_Project
+    volumes:
+      # 기존 설정 전체 유지 (Telegram, cron jobs, agents, memory 모두 포함)
+      - /home/user/.openclaw:/home/node/.openclaw
+      # openclaw.json의 workspace/sandbox 경로가 /home/user/... 를 참조하므로
+      # 컨테이너 안에서도 동일 경로로 접근 가능하게 마운트
+      - /home/user/projects:/home/user/projects
+      - /home/user/.openclaw:/home/user/.openclaw
+      # 샌드박스 컨테이너 생성을 위한 Docker 소켓 + CLI 바이너리
+      # WSL2에서 /usr/bin/docker는 /mnt/wsl/... 심링크 → 컨테이너 내 접근 불가
+      # 실제 바이너리를 복사해서 마운트
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /home/user/.local/bin/docker:/usr/local/bin/docker:ro
+    # 호스트 docker 그룹(GID 1001)에 컨테이너 node 유저 추가 → docker.sock 접근 권한
+    group_add:
+      - "1001"
+    networks:
+      - guitar-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:18789/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+
+  # CLI 컨테이너 (openclaw cron add 등 관리 명령어용)
+  # 사용법: docker compose --profile cli run --rm openclaw-cli cron list
+  openclaw-cli:
+    image: ghcr.io/openclaw/openclaw:latest
+    container_name: openclaw-cli
+    network_mode: "service:openclaw-gateway"
+    stdin_open: true
+    tty: true
+    init: true
+    environment:
+      - OPENCLAW_GATEWAY_TOKEN=${OPENCLAW_GATEWAY_TOKEN}
+      - OPENCLAW_ALLOW_INSECURE_PRIVATE_WS=1
+    volumes:
+      - /home/user/.openclaw:/home/node/.openclaw
+    depends_on:
+      openclaw-gateway:
+        condition: service_healthy
+    cap_drop:
+      - NET_RAW
+      - NET_ADMIN
+    security_opt:
+      - no-new-privileges:true
+    profiles:
+      - cli   # 평소엔 안 뜸. --profile cli 옵션으로 실행
+
+  # ─────────────────────────────────────────
   # Node.js 서버 (튜너 + Unity WebGL 서빙)
+  # ─────────────────────────────────────────
   node-server:
     build:
       context: ./Tunerapp
@@ -8,16 +84,16 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      # Unity WebGL 빌드 마운트 (Windows 경로)
       - /mnt/c/Projects/Project_Guitar/GuitarPracticeUnity/Builds/WebGL:/app/practice:ro
-      # 개발 모드: 코드 변경 감지
       - ./Tunerapp:/app
       - /app/node_modules
     restart: unless-stopped
     networks:
       - guitar-network
 
+  # ─────────────────────────────────────────
   # FastAPI AI 서버
+  # ─────────────────────────────────────────
   ai-api:
     build:
       context: ./api
@@ -26,11 +102,10 @@ services:
     ports:
       - "8080:8080"
     environment:
-      # OpenAI API 키 (필요시 .env 파일에서 불러오기)
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - MONGODB_URL=mongodb://admin:REDACTED@db:27017/
     volumes:
-      # 개발 모드: 코드 변경 감지 (hot reload)
       - ./api:/app
     restart: unless-stopped
     networks:
@@ -38,7 +113,9 @@ services:
     depends_on:
       - db
 
-  # MongoDB (사용자 데이터, 연습 기록 저장)
+  # ─────────────────────────────────────────
+  # MongoDB
+  # ─────────────────────────────────────────
   db:
     image: mongo:7
     container_name: guitar-mongodb
@@ -53,7 +130,7 @@ services:
     networks:
       - guitar-network
 
-  # MongoDB Express (DB 관리 GUI, 선택사항)
+  # MongoDB Express (DB 관리 GUI)
   mongo-express:
     image: mongo-express:latest
     container_name: guitar-mongo-express

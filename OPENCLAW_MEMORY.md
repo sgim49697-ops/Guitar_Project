@@ -14,3 +14,6 @@ For longer tasks, report in this flow:
 1. Execution started
 2. Mid-run streaming summary (key progress/errors)
 3. Final completion report (result + next action)
+
+## .codex Settings Rule
+When working in this project, always load and follow settings files under `.codex/` before starting implementation.

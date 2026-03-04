@@ -190,12 +190,58 @@ const GUITAR_STRINGS = [
 // 크로매틱 스케일 (전체 음이름 매핑용)
 const NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 
+// 피치 스무딩 설정
+const PITCH_HISTORY_SIZE = 7;
+const PITCH_HISTORY = [];
+const RMS_THRESHOLD = 0.001;
+
 let audioCtx = null;
 let analyser = null;
 let stream = null;
 let isRunning = false;
 let selectedString = null;
 let animFrameId = null;
+
+
+function getMedian(values) {
+  if (!values.length) return null;
+  const sorted = [...values].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  return sorted.length % 2 === 0
+    ? (sorted[mid - 1] + sorted[mid]) / 2
+    : sorted[mid];
+}
+
+function smoothPitch(rawFreq) {
+  PITCH_HISTORY.push(rawFreq);
+  if (PITCH_HISTORY.length > PITCH_HISTORY_SIZE) PITCH_HISTORY.shift();
+
+  const median = getMedian(PITCH_HISTORY);
+  if (median === null) return null;
+
+  // 중앙값 기준으로 이상치 제거 후 이동평균
+  const filtered = PITCH_HISTORY.filter(f => Math.abs(f - median) / median <= 0.08);
+  const samples = filtered.length ? filtered : [median];
+  return samples.reduce((sum, v) => sum + v, 0) / samples.length;
+}
+
+function showSilenceUI() {
+  PITCH_HISTORY.length = 0;
+  const noteEl = document.getElementById('noteName');
+  const freqEl = document.getElementById('freqDisplay');
+  const centsEl = document.getElementById('centsDisplay');
+  const indicator = document.getElementById('indicator');
+  const guideEl = document.getElementById('guide');
+
+  noteEl.textContent = '—';
+  noteEl.style.color = '#666';
+  freqEl.textContent = '—';
+  centsEl.textContent = '—';
+  centsEl.className = 'cents';
+  indicator.style.left = '50%';
+  indicator.classList.remove('in-tune');
+  guideEl.textContent = '소리를 기다리는 중...';
+}
 
 // 줄 선택 버튼 생성
 const stringsEl = document.getElementById('strings');
@@ -282,7 +328,7 @@ function autoCorrelate(buf, sampleRate) {
   const rmsEl = document.getElementById('rmsVal');
   if (rmsEl) rmsEl.textContent = rms.toFixed(5);
 
-  if (rms < 0.001) {
+  if (rms < RMS_THRESHOLD) {
     const dEl = document.getElementById('detectVal');
     if (dEl) dEl.textContent = `미달 (rms=${rms.toFixed(4)})`;
     return -1;
@@ -365,21 +411,30 @@ function detect() {
   const buf = new Float32Array(analyser.fftSize);
   analyser.getFloatTimeDomainData(buf);
 
-  const freq = autoCorrelate(buf, audioCtx.sampleRate);
-  if (freq === -1) return; // 소리 없음 (RMS 미달)
-  const dEl = document.getElementById('detectVal');
-  if (dEl) dEl.textContent = `${freq.toFixed(1)} Hz`;
+  const rawFreq = autoCorrelate(buf, audioCtx.sampleRate);
+  if (rawFreq === -1) {
+    showSilenceUI();
+    return; // 소리 없음 (RMS 미달)
+  }
 
-  const noteInfo = freqToNote(freq);
-  const cents = noteInfo.cents;
+  const smoothFreqValue = smoothPitch(rawFreq);
+  if (!smoothFreqValue) {
+    showSilenceUI();
+    return;
+  }
+
+  const dEl = document.getElementById('detectVal');
+  if (dEl) dEl.textContent = `${rawFreq.toFixed(1)} → ${smoothFreqValue.toFixed(1)} Hz`;
+
+  const noteInfo = freqToNote(smoothFreqValue);
 
   // 타겟 줄 결정
   let targetIdx = selectedString;
   if (targetIdx === null) {
-    targetIdx = findClosestString(freq);
+    targetIdx = findClosestString(smoothFreqValue);
   }
   const target = GUITAR_STRINGS[targetIdx];
-  const centsFromTarget = 1200 * Math.log2(freq / target.freq);
+  const centsFromTarget = 1200 * Math.log2(smoothFreqValue / target.freq);
 
   // UI 업데이트
   const noteEl = document.getElementById('noteName');
@@ -389,7 +444,7 @@ function detect() {
   const guideEl = document.getElementById('guide');
 
   noteEl.textContent = noteInfo.name + noteInfo.octave;
-  freqEl.textContent = freq.toFixed(1) + ' Hz';
+  freqEl.textContent = smoothFreqValue.toFixed(1) + ' Hz';
 
   // 센트 표시 (타겟 기준)
   const absCents = Math.abs(centsFromTarget);
